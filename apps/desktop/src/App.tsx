@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useApp } from './store';
 import { Login } from './components/Login';
 import { Main } from './components/Main';
-import { Butterfly, ResizeHandles, TitleBar } from './components/TitleBar';
+import { MsnLogo, ResizeHandles, TitleBar } from './components/TitleBar';
 import { conversationTitle } from './utils';
 import './styles.css';
 
@@ -39,7 +39,7 @@ export function App() {
     return (
       <div className="splash">
         <div className="splash-logo">
-          <Butterfly size={84} />
+          <MsnLogo size={84} />
         </div>
         <h1>Messenger El Nacio</h1>
         <p>Conectando…</p>

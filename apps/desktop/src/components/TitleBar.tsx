@@ -1,57 +1,27 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import msnLogo from '../assets/msn-logo.png';
 
 const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
-export function Butterfly({ size = 20 }: { size?: number }) {
+export function MsnLogo({ size = 20 }: { size?: number }) {
   return (
-    <svg className="butterfly" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <defs>
-        <linearGradient id="wing-a" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#9bd6ff" />
-          <stop offset=".55" stopColor="#2f8ee8" />
-          <stop offset="1" stopColor="#0b4fae" />
-        </linearGradient>
-        <linearGradient id="wing-b" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stopColor="#0b4fae" />
-          <stop offset=".6" stopColor="#3f9df2" />
-          <stop offset="1" stopColor="#a5dcff" />
-        </linearGradient>
-      </defs>
-      <g stroke="#063a80" strokeWidth=".7" strokeLinejoin="round">
-        <path
-          d="M15.4 13.4C13.6 7.2 9.3 3.2 5.1 4.1 1.2 4.9.6 9.8 3.2 13.1c2 2.6 6.6 4.1 12.2 3.3z"
-          fill="url(#wing-a)"
-        />
-        <path
-          d="M16.6 13.4c1.8-6.2 6.1-10.2 10.3-9.3 3.9.8 4.5 5.7 1.9 9-2 2.6-6.6 4.1-12.2 3.3z"
-          fill="url(#wing-a)"
-        />
-        <path
-          d="M15.2 18.6c-3.6-1-7.7.3-8.6 3.5-.8 3.1 2.1 5.8 5.1 5 2.3-.6 3.9-3.6 4.6-7.2z"
-          fill="url(#wing-b)"
-        />
-        <path
-          d="M16.8 18.6c3.6-1 7.7.3 8.6 3.5.8 3.1-2.1 5.8-5.1 5-2.3-.6-3.9-3.6-4.6-7.2z"
-          fill="url(#wing-b)"
-        />
-      </g>
-      <ellipse cx="16" cy="16.4" rx="1.9" ry="7.2" fill="#08356f" />
-      <path
-        d="M16 9.8c-.9-2.4-2.4-3.7-4.2-4.1M16 9.8c.9-2.4 2.4-3.7 4.2-4.1"
-        stroke="#08356f"
-        strokeWidth=".9"
-        strokeLinecap="round"
-        fill="none"
-      />
-    </svg>
+    <img
+      className="msn-logo"
+      src={msnLogo}
+      width={size}
+      height={size}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+    />
   );
 }
 
 export function Wordmark() {
   return (
     <span className="wordmark" title="Messenger El Nacio">
-      <Butterfly size={22} />
+      <MsnLogo size={22} />
       <span className="wordmark-text">nacio</span>
     </span>
   );
@@ -117,7 +87,7 @@ export function TitleBar({ title }: { title: string }) {
   return (
     <header className="titlebar" data-tauri-drag-region onDoubleClick={() => void run((w) => w.toggleMaximize())}>
       <span className="titlebar-icon" data-tauri-drag-region>
-        <Butterfly size={16} />
+        <MsnLogo size={16} />
       </span>
       <span className="titlebar-title" data-tauri-drag-region>
         {title}
@@ -245,7 +215,7 @@ export function ResizeHandles() {
 export function BrandMark({ compact }: { compact?: boolean }) {
   return (
     <span className={`brand-mark ${compact ? 'compact' : ''}`}>
-      <Butterfly size={compact ? 18 : 24} />
+      <MsnLogo size={compact ? 18 : 24} />
       <span className="brand-mark-text">
         <strong>Messenger</strong>
         <small>El Nacio</small>

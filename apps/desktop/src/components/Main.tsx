@@ -4,7 +4,7 @@ import { STATUS_LABELS } from '@nacio/shared';
 import { version } from '../../package.json';
 import { useApp } from '../store';
 import { canManageGroup, contactName, conversationPeer, conversationTitle, lastSeenText, statusLabel } from '../utils';
-import { Butterfly, BrandMark, MenuBar, type MenuEntry } from './TitleBar';
+import { MsnLogo, BrandMark, MenuBar, type MenuEntry } from './TitleBar';
 import { Chat } from './Chat';
 import { AddContactModal, CreateGroupModal, GroupInfoModal, SettingsModal } from './Modals';
 
@@ -398,7 +398,7 @@ function Welcome({
   return (
     <div className="welcome">
       <div className="welcome-logo">
-        <Butterfly size={68} />
+        <MsnLogo size={68} />
       </div>
       <h2>Bienvenido, {name}</h2>
       <p className="welcome-sub">

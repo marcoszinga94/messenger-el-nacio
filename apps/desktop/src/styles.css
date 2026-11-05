@@ -720,6 +720,14 @@ textarea::placeholder {
   border-bottom: 1px solid #02347d;
 }
 
+.msn-logo {
+  display: block;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 20, 60, 0.3));
+}
+
 .brand-mark {
   display: flex;
   align-items: center;

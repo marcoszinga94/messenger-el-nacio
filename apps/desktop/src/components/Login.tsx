@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useApp } from '../store';
 import { getServer } from '../session';
 import { version } from '../../package.json';
-import { Butterfly } from './TitleBar';
+import { MsnLogo } from './TitleBar';
 
 type Mode = 'login' | 'register';
 
@@ -56,7 +56,7 @@ export function Login() {
         <div className="login-body">
           <aside className="login-hero">
             <div className="hero-logo">
-              <Butterfly size={64} />
+              <MsnLogo size={64} />
             </div>
             <h1>Messenger<br />El Nacio</h1>
             <p>Tu mensajería de la institución, con el espíritu de MSN.</p>
