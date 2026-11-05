@@ -65,7 +65,6 @@ export function Login() {
               <li>Contactos, estados y zumbidos</li>
               <li>Funciona en la LAN y desde casa</li>
             </ul>
-            <div className="hero-badge">50 alumnos · sin instalar nada más</div>
           </aside>
 
           <section className="login-form">

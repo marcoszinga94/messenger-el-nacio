@@ -481,8 +481,8 @@ textarea::placeholder {
 }
 
 .login-window {
-  width: min(820px, 100%);
-  height: min(540px, 100%);
+  width: min(760px, 100%);
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   background: #fff;
@@ -497,7 +497,6 @@ textarea::placeholder {
 }
 
 .login-body {
-  flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1.02fr;
@@ -505,10 +504,10 @@ textarea::placeholder {
 
 .login-hero {
   position: relative;
-  padding: 34px 32px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   color: #fff;
   background:
     radial-gradient(circle at 78% 6%, rgba(255, 255, 255, 0.3), transparent 45%),
@@ -517,8 +516,8 @@ textarea::placeholder {
 }
 
 .hero-logo {
-  width: 84px;
-  height: 84px;
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -529,7 +528,7 @@ textarea::placeholder {
 
 .login-hero h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1.08;
   letter-spacing: 0.2px;
   text-shadow: 1px 2px 3px rgba(0, 20, 60, 0.45);
@@ -544,11 +543,11 @@ textarea::placeholder {
 }
 
 .hero-list {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 7px;
+  gap: 6px;
   font-size: 11px;
 }
 
@@ -559,19 +558,8 @@ textarea::placeholder {
   color: #b8e0ff;
 }
 
-.hero-badge {
-  margin-top: auto;
-  align-self: flex-start;
-  padding: 5px 10px;
-  font-size: 10px;
-  color: #eaf5ff;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-}
-
 .login-form {
-  padding: 24px 30px;
+  padding: 22px 28px;
   display: flex;
   flex-direction: column;
   min-height: 0;
