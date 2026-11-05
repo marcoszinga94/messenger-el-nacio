@@ -34,6 +34,8 @@ export function Main() {
   const blockContact = useApp((state) => state.blockContact);
   const removeContact = useApp((state) => state.removeContact);
   const closeConversation = useApp((state) => state.closeConversation);
+  const checkForUpdates = useApp((state) => state.checkForUpdates);
+  const updateChecking = useApp((state) => state.updateChecking);
 
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState<ModalKind>(null);
@@ -198,6 +200,12 @@ export function Main() {
     {
       label: 'Ayuda',
       items: [
+        {
+          label: updateChecking ? 'Buscando actualizaciones…' : 'Buscar actualizaciones…',
+          disabled: updateChecking,
+          onClick: () => void checkForUpdates({ manual: true }),
+        },
+        { separator: true },
         {
           label: 'Acerca de Messenger El Nacio',
           onClick: () => setToast(`Messenger El Nacio ${version} · Mensajería para la institución.`),

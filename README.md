@@ -78,6 +78,7 @@ makepkg -si
 - Envío de archivos e imágenes (hasta 25 MB) y notas de voz.
 - Formato de texto (negrita, cursiva, subrayado y tachado) y fondos por conversación.
 - Juegos (dados compartidos, ta-te-tí y piedra, papel o tijera) y guiños animados.
+- Aviso automático de nuevas versiones, con enlace de descarga al release publicado.
 - Panel de administración: usuarios, invitaciones, salas, ajustes y auditoría.
 - Registro con código de invitación.
 - HTTPS automático con Caddy y despliegue en Windows.

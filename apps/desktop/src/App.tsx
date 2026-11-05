@@ -4,6 +4,7 @@ import { Login } from './components/Login';
 import { Main } from './components/Main';
 import { MsnLogo, ResizeHandles, TitleBar } from './components/TitleBar';
 import { conversationTitle } from './utils';
+import { CURRENT_VERSION } from './updates';
 import './styles.css';
 
 export function App() {
@@ -13,6 +14,11 @@ export function App() {
   const nudgeTick = useApp((state) => state.nudgeTick);
   const winkBurst = useApp((state) => state.winkBurst);
   const clearWink = useApp((state) => state.clearWink);
+  const update = useApp((state) => state.update);
+  const updateDismissed = useApp((state) => state.updateDismissed);
+  const checkForUpdates = useApp((state) => state.checkForUpdates);
+  const dismissUpdate = useApp((state) => state.dismissUpdate);
+  const openUpdate = useApp((state) => state.openUpdate);
   const activeId = useApp((state) => state.activeId);
   const conversations = useApp((state) => state.conversations);
   const contacts = useApp((state) => state.contacts);
@@ -34,6 +40,12 @@ export function App() {
     const timer = setTimeout(clearWink, 2600);
     return () => clearTimeout(timer);
   }, [winkBurst, clearWink]);
+
+  useEffect(() => {
+    void checkForUpdates({ silent: true });
+    const timer = setInterval(() => void checkForUpdates({ silent: true }), 6 * 60 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [checkForUpdates]);
 
   if (!ready) {
     return (
@@ -60,6 +72,26 @@ export function App() {
     <div className={`app-root ${shake ? 'shake' : ''}`}>
       <div className="window-frame">
         <TitleBar title={windowTitle} />
+        {update && !updateDismissed && (
+          <div className="update-banner">
+            <span className="update-banner-icon">⭐</span>
+            <span className="update-banner-text">
+              Hay una nueva versión de Messenger El Nacio: <strong>v{update.latest}</strong>. Tenés la
+              v{CURRENT_VERSION}.
+            </span>
+            <button type="button" className="mini-button ok" onClick={() => void openUpdate()}>
+              Descargar
+            </button>
+            <button
+              type="button"
+              className="update-banner-close"
+              onClick={dismissUpdate}
+              title="Ocultar hasta la próxima versión"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <div className="window-body">{session ? <Main /> : <Login />}</div>
       </div>
       <ResizeHandles />

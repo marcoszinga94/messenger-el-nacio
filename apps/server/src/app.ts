@@ -8,6 +8,7 @@ import multipart from '@fastify/multipart';
 import { FILE_MAX_BYTES } from '@nacio/shared';
 import { config } from './config.js';
 import { getSettings, openDatabase } from './db.js';
+import { latestRelease } from './version.js';
 import { ensureSeed } from './seed.js';
 import { verifyAccessToken } from './auth.js';
 import { setupSockets } from './socket.js';
@@ -156,6 +157,14 @@ export async function buildApp() {
     app: getSettings(db).appName,
     uptime: Math.round(process.uptime()),
   }));
+
+  app.get('/api/version', async (_request, reply) => {
+    reply.header('Cache-Control', 'public, max-age=300');
+    return reply.send({
+      release: await latestRelease(),
+      releasesUrl: config.releasesUrl,
+    });
+  });
 
   app.get('/', async (_request, reply) => {
     return reply.type('text/html; charset=utf-8').send(landingPage(getSettings(db).appName, config.releasesUrl));

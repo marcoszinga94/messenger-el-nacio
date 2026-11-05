@@ -13,6 +13,7 @@
   "dependencies": {
     "@nacio/shared": "workspace:*",
     "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-opener": "^2.7.2",
     "dexie": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -47,6 +47,8 @@ export const config = {
   uploadsDir,
   publicUrl: process.env.PUBLIC_URL ?? '',
   releasesUrl: process.env.RELEASES_URL ?? 'https://github.com/marcoszinga94/messenger-el-nacio/releases/latest',
+  updateRepo: process.env.UPDATE_REPO ?? 'marcoszinga94/messenger-el-nacio',
+  updateApiBase: (process.env.UPDATE_API_BASE ?? 'https://api.github.com').replace(/\/+$/, ''),
   corsOrigins: [...new Set([...defaultOrigins, ...extraOrigins])],
   jwtSecret: Buffer.from(readFileSync(secretPath, 'utf8').trim(), 'hex'),
   adminUser: process.env.ADMIN_USER ?? 'admin',

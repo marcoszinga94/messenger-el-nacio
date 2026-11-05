@@ -13,6 +13,16 @@ import {
 } from './session';
 import { createSocket, type AppSocket } from './socket';
 import { isSoundOn, playSound, setSoundOn } from './sounds';
+import {
+  CURRENT_VERSION,
+  clearDismissedVersion,
+  dismissedVersion,
+  dismissVersion,
+  fetchLatestRelease,
+  isNewer,
+  openExternal,
+  type ReleaseInfo,
+} from './updates';
 
 type Connection = 'online' | 'connecting' | 'offline';
 
@@ -60,8 +70,14 @@ export interface AppState {
   nudgeTick: number;
   winkBurst: WinkBurst | null;
   backgrounds: Record<string, string>;
+  update: ReleaseInfo | null;
+  updateDismissed: boolean;
+  updateChecking: boolean;
 
   initialize: () => Promise<void>;
+  checkForUpdates: (options?: { silent?: boolean; manual?: boolean }) => Promise<ReleaseInfo | null>;
+  dismissUpdate: () => void;
+  openUpdate: () => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   register: (input: { code: string; username: string; displayName: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -149,6 +165,9 @@ export const useApp = create<AppState>()((set, get) => ({
   nudgeTick: 0,
   winkBurst: null,
   backgrounds: loadBackgrounds(),
+  update: null,
+  updateDismissed: false,
+  updateChecking: false,
 
   async initialize() {
     const stored = loadSession();
@@ -173,6 +192,44 @@ export const useApp = create<AppState>()((set, get) => ({
       }
     } finally {
       set({ ready: true });
+    }
+  },
+
+  async checkForUpdates(options = {}) {
+    if (get().updateChecking) return get().update;
+    if (options.manual) clearDismissedVersion();
+    set({ updateChecking: true });
+    try {
+      const release = await fetchLatestRelease();
+      if (!release || !isNewer(release.latest)) {
+        set({ update: null, updateDismissed: false, updateChecking: false });
+        if (options.manual) get().setToast(`Estás al día (v${CURRENT_VERSION}).`);
+        return null;
+      }
+      const dismissed = dismissedVersion() === release.latest;
+      set({ update: release, updateDismissed: dismissed, updateChecking: false });
+      if (options.manual) get().setToast(`Hay una nueva versión disponible: v${release.latest}.`);
+      return release;
+    } catch {
+      set({ updateChecking: false });
+      if (options.manual) get().setToast('No se pudo comprobar si hay actualizaciones.');
+      return null;
+    }
+  },
+
+  dismissUpdate() {
+    const update = get().update;
+    if (update) dismissVersion(update.latest);
+    set({ updateDismissed: true });
+  },
+
+  async openUpdate() {
+    const update = get().update;
+    if (!update) return;
+    try {
+      await openExternal(update.url);
+    } catch {
+      get().setToast('No se pudo abrir el enlace de descarga.');
     }
   },
 
