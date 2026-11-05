@@ -63,7 +63,7 @@ function Glyph({ kind }: { kind: 'min' | 'max' | 'restore' | 'close' }) {
   );
 }
 
-export function TitleBar({ title }: { title: string }) {
+export function TitleBar({ title, onClose }: { title: string; onClose?: () => void }) {
   const [maximized, setMaximized] = useState(false);
 
   useEffect(() => {
@@ -114,7 +114,10 @@ export function TitleBar({ title }: { title: string }) {
           type="button"
           className="tb-btn close"
           title="Cerrar"
-          onClick={() => void run((w) => w.close())}
+          onClick={() => {
+            if (onClose) onClose();
+            else void run((w) => w.close());
+          }}
         >
           <Glyph kind="close" />
         </button>

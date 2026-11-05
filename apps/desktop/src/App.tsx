@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useApp } from './store';
 import { Login } from './components/Login';
 import { Main } from './components/Main';
@@ -6,6 +7,8 @@ import { MsnLogo, ResizeHandles, TitleBar } from './components/TitleBar';
 import { conversationTitle } from './utils';
 import { CURRENT_VERSION } from './updates';
 import './styles.css';
+
+const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 export function App() {
   const session = useApp((state) => state.session);
@@ -19,14 +22,48 @@ export function App() {
   const checkForUpdates = useApp((state) => state.checkForUpdates);
   const dismissUpdate = useApp((state) => state.dismissUpdate);
   const openUpdate = useApp((state) => state.openUpdate);
+  const endSession = useApp((state) => state.endSession);
   const activeId = useApp((state) => state.activeId);
   const conversations = useApp((state) => state.conversations);
   const contacts = useApp((state) => state.contacts);
   const [shake, setShake] = useState(false);
+  const closing = useRef(false);
 
   useEffect(() => {
     void initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    if (!inTauri) return;
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const appWindow = getCurrentWindow();
+        const off = await appWindow.onCloseRequested(async (event) => {
+          if (closing.current) return;
+          closing.current = true;
+          event.preventDefault();
+          endSession();
+          try {
+            await appWindow.close();
+          } catch {
+            closing.current = false;
+          }
+        });
+        if (cancelled) off();
+        else unlisten = off;
+      } catch {
+        // Fuera de Tauri o sin permiso: la ventana se cierra normalmente.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [endSession]);
 
   useEffect(() => {
     if (!nudgeTick) return;
@@ -59,6 +96,17 @@ export function App() {
     );
   }
 
+  function requestClose() {
+    if (!inTauri) return;
+    endSession();
+    closing.current = true;
+    void getCurrentWindow()
+      .close()
+      .catch(() => {
+        closing.current = false;
+      });
+  }
+
   const activeConversation = activeId
     ? conversations.find((conversation) => conversation.id === activeId)
     : undefined;
@@ -71,7 +119,7 @@ export function App() {
   return (
     <div className={`app-root ${shake ? 'shake' : ''}`}>
       <div className="window-frame">
-        <TitleBar title={windowTitle} />
+        <TitleBar title={windowTitle} onClose={requestClose} />
         {update && !updateDismissed && (
           <div className="update-banner">
             <span className="update-banner-icon">⭐</span>

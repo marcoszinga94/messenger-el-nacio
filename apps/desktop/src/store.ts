@@ -5,6 +5,7 @@ import { api, ApiError, requestLogin, requestRegister, uploadAttachment } from '
 import { cacheMessages, cachedMessages, clearConversationHistory, clearLocalHistory } from './db';
 import {
   clearSession,
+  getServer,
   loadSession,
   refreshTokens,
   saveSession,
@@ -81,6 +82,7 @@ export interface AppState {
   login: (username: string, password: string) => Promise<void>;
   register: (input: { code: string; username: string; displayName: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
+  endSession: () => void;
   connect: () => void;
   refreshContacts: () => Promise<void>;
   refreshConversations: () => Promise<void>;
@@ -271,6 +273,45 @@ export const useApp = create<AppState>()((set, get) => ({
       typing: {},
       connection: 'offline',
     });
+  },
+
+  /**
+   * Cierre de sesión para cuando se cierra la ventana.
+   * Borra el token local de inmediato (el próximo arranque pide login) y avisa
+   * al servidor en segundo plano para revocar el refresh token sin demorar la salida.
+   */
+  endSession() {
+    const session = loadSession();
+    socket?.removeAllListeners();
+    socket?.disconnect();
+    socket = null;
+    clearSession();
+    set({
+      session: null,
+      ready: true,
+      contacts: [],
+      conversations: [],
+      messages: {},
+      openIds: [],
+      activeId: null,
+      typing: {},
+      connection: 'offline',
+    });
+
+    if (!session) return;
+    try {
+      void fetch(`${getServer()}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: JSON.stringify({ refreshToken: session.refreshToken }),
+        keepalive: true,
+      }).catch(() => undefined);
+    } catch {
+      // Sin red: la sesión local ya quedó cerrada.
+    }
   },
 
   connect() {
