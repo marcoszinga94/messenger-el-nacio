@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useApp } from '../store';
 import { getServer } from '../session';
+import { Butterfly } from './TitleBar';
 
 type Mode = 'login' | 'register';
 
@@ -51,14 +52,11 @@ export function Login() {
   return (
     <div className="login-root">
       <div className="login-window">
-        <div className="login-titlebar">
-          <span className="titlebar-dot" />
-          <span>Messenger El Nacio</span>
-        </div>
-
         <div className="login-body">
           <aside className="login-hero">
-            <div className="hero-logo">💬</div>
+            <div className="hero-logo">
+              <Butterfly size={64} />
+            </div>
             <h1>Messenger<br />El Nacio</h1>
             <p>Tu mensajería de la institución, con el espíritu de MSN.</p>
             <ul className="hero-list">

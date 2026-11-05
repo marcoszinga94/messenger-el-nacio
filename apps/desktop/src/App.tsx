@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useApp } from './store';
 import { Login } from './components/Login';
 import { Main } from './components/Main';
+import { Butterfly, ResizeHandles, TitleBar } from './components/TitleBar';
+import { conversationTitle } from './utils';
 import './styles.css';
 
 export function App() {
@@ -9,6 +11,9 @@ export function App() {
   const ready = useApp((state) => state.ready);
   const initialize = useApp((state) => state.initialize);
   const nudgeTick = useApp((state) => state.nudgeTick);
+  const activeId = useApp((state) => state.activeId);
+  const conversations = useApp((state) => state.conversations);
+  const contacts = useApp((state) => state.contacts);
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
@@ -25,16 +30,31 @@ export function App() {
   if (!ready) {
     return (
       <div className="splash">
-        <div className="splash-logo">💬</div>
+        <div className="splash-logo">
+          <Butterfly size={84} />
+        </div>
         <h1>Messenger El Nacio</h1>
         <p>Conectando…</p>
       </div>
     );
   }
 
+  const activeConversation = activeId
+    ? conversations.find((conversation) => conversation.id === activeId)
+    : undefined;
+  const windowTitle = session
+    ? activeConversation
+      ? `${conversationTitle(activeConversation, session.user.id, contacts)} - Conversación`
+      : 'Messenger El Nacio'
+    : 'Iniciar sesión - Messenger El Nacio';
+
   return (
     <div className={`app-root ${shake ? 'shake' : ''}`}>
-      {session ? <Main /> : <Login />}
+      <div className="window-frame">
+        <TitleBar title={windowTitle} />
+        <div className="window-body">{session ? <Main /> : <Login />}</div>
+      </div>
+      <ResizeHandles />
       <Toast />
     </div>
   );
