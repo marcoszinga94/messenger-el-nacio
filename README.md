@@ -12,7 +12,7 @@ Los instaladores se publican en [Releases](https://github.com/marcoszinga94/mess
 
 ### Windows
 
-1. Descargar `Messenger.El.Nacio-0.1.1-Windows-x64-Setup.exe`.
+1. Descargar `Messenger.El.Nacio-0.1.2-Windows-x64-Setup.exe`.
 2. Ejecutarlo. Si Windows muestra SmartScreen, elegir **Más información → Ejecutar de todas formas** (el instalador no tiene firma digital paga).
 3. Abrir el cliente y registrarse con el código de invitación del curso, o iniciar sesión si ya tenés cuenta.
 
@@ -22,28 +22,28 @@ La misma aplicación se empaqueta en varios formatos. Elegí el archivo según t
 
 | Formato | Distribuciones | Archivo |
 | --- | --- | --- |
-| `.AppImage` | Cualquier distro x86_64 | `Messenger.El.Nacio-0.1.1-Linux-AppImage-x86_64.AppImage` |
-| `.deb` | Ubuntu, Debian, Mint, Pop!_OS | `Messenger.El.Nacio-0.1.1-Linux-Ubuntu-Debian-amd64.deb` |
-| `.rpm` | Fedora, openSUSE, RHEL | `Messenger.El.Nacio-0.1.1-Linux-Fedora-openSUSE-x86_64.rpm` |
-| `.pkg.tar.zst` | Arch Linux y CachyOS | `Messenger.El.Nacio-0.1.1-Linux-Arch-CachyOS-x86_64.pkg.tar.zst` |
-| `.tar.gz` | Cualquier distro moderna | `Messenger.El.Nacio-0.1.1-Linux-Portable-x86_64.tar.gz` |
+| `.AppImage` | Cualquier distro x86_64 | `Messenger.El.Nacio-0.1.2-Linux-AppImage-x86_64.AppImage` |
+| `.deb` | Ubuntu, Debian, Mint, Pop!_OS | `Messenger.El.Nacio-0.1.2-Linux-Ubuntu-Debian-amd64.deb` |
+| `.rpm` | Fedora, openSUSE, RHEL | `Messenger.El.Nacio-0.1.2-Linux-Fedora-openSUSE-x86_64.rpm` |
+| `.pkg.tar.zst` | Arch Linux y CachyOS | `Messenger.El.Nacio-0.1.2-Linux-Arch-CachyOS-x86_64.pkg.tar.zst` |
+| `.tar.gz` | Cualquier distro moderna | `Messenger.El.Nacio-0.1.2-Linux-Portable-x86_64.tar.gz` |
 
 ```bash
 # AppImage: no se instala, se ejecuta directo
-chmod +x Messenger.El.Nacio-0.1.1-Linux-AppImage-x86_64.AppImage
-./Messenger.El.Nacio-0.1.1-Linux-AppImage-x86_64.AppImage
+chmod +x Messenger.El.Nacio-0.1.2-Linux-AppImage-x86_64.AppImage
+./Messenger.El.Nacio-0.1.2-Linux-AppImage-x86_64.AppImage
 
 # Ubuntu, Debian, Mint, Pop!_OS
-sudo apt install ./Messenger.El.Nacio-0.1.1-Linux-Ubuntu-Debian-amd64.deb
+sudo apt install ./Messenger.El.Nacio-0.1.2-Linux-Ubuntu-Debian-amd64.deb
 
 # Fedora, openSUSE, RHEL
-sudo dnf install ./Messenger.El.Nacio-0.1.1-Linux-Fedora-openSUSE-x86_64.rpm
+sudo dnf install ./Messenger.El.Nacio-0.1.2-Linux-Fedora-openSUSE-x86_64.rpm
 
 # Arch Linux y CachyOS
-sudo pacman -U ./Messenger.El.Nacio-0.1.1-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
+sudo pacman -U ./Messenger.El.Nacio-0.1.2-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
 
 # Binario portable: descomprimir y ejecutar
-tar -xzf Messenger.El.Nacio-0.1.1-Linux-Portable-x86_64.tar.gz
+tar -xzf Messenger.El.Nacio-0.1.2-Linux-Portable-x86_64.tar.gz
 ./messenger-el-nacio
 ```
 
@@ -56,7 +56,7 @@ Requisitos: arquitectura **x86_64** y glibc 2.35 o superior (Ubuntu 22.04+, Debi
 El paquete nativo se puede instalar directo:
 
 ```bash
-sudo pacman -U Messenger.El.Nacio-0.1.1-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
+sudo pacman -U Messenger.El.Nacio-0.1.2-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
 ```
 
 O compilarlo desde el `PKGBUILD` del repositorio:
@@ -162,7 +162,7 @@ La guía completa está en [docs/DEPLOY-WINDOWS.md](docs/DEPLOY-WINDOWS.md). Res
 
 ## Estado
 
-Versión 0.1.1. Clientes de Windows (NSIS) y Linux (AppImage, deb, rpm y binario portable) compilados con Tauri.
+Versión 0.1.2. Clientes de Windows (NSIS) y Linux (AppImage, deb, rpm y binario portable) compilados con Tauri.
 
 ## Licencia
 

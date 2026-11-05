@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ContactEntry, PublicUser, UserStatus } from '@nacio/shared';
 import { STATUS_LABELS } from '@nacio/shared';
+import { version } from '../../package.json';
 import { useApp } from '../store';
 import { canManageGroup, contactName, conversationPeer, conversationTitle, lastSeenText, statusLabel } from '../utils';
 import { Butterfly, BrandMark, MenuBar, type MenuEntry } from './TitleBar';
@@ -199,7 +200,7 @@ export function Main() {
       items: [
         {
           label: 'Acerca de Messenger El Nacio',
-          onClick: () => setToast('Messenger El Nacio 0.1.1 · Mensajería para la institución.'),
+          onClick: () => setToast(`Messenger El Nacio ${version} · Mensajería para la institución.`),
         },
       ],
     },

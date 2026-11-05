@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ConversationSummary, Message } from '@nacio/shared';
 import { EMOTICONS, renderEmoticons } from '@nacio/shared';
+import { version } from '../../package.json';
 import { useApp } from '../store';
 import { Wordmark } from './TitleBar';
 import {

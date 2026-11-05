@@ -1,6 +1,6 @@
 # Mantenedor: Marcos Zingaretti <marcoszinga94@users.noreply.github.com>
 pkgname=messenger-el-nacio-bin
-pkgver=0.1.1
+pkgver=0.1.2
 pkgrel=1
 pkgdesc="Mensajería instantánea estilo MSN para la institución"
 arch=('x86_64')

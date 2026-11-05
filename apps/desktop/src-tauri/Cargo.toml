@@ -1,6 +1,6 @@
 [package]
 name = "messenger-el-nacio"
-version = "0.1.1"
+version = "0.1.2"
 description = "Cliente de mensajería de la institución"
 authors = ["Messenger El Nacio"]
 edition = "2021"

@@ -7,7 +7,7 @@ Paquete precompilado de Messenger El Nacio (`messenger-el-nacio-bin`).
 Descargar `Messenger.El.Nacio-<versión>-Linux-Arch-CachyOS-x86_64.pkg.tar.zst` desde la página de releases y ejecutar:
 
 ```bash
-sudo pacman -U Messenger.El.Nacio-0.1.1-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
+sudo pacman -U Messenger.El.Nacio-0.1.2-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
 ```
 
 ## Compilar desde el PKGBUILD
@@ -27,8 +27,8 @@ El paquete que genera `makepkg` usa el nombre estándar de Arch. Para publicarlo
 
 ```bash
 makepkg -f
-mv messenger-el-nacio-bin-0.1.1-1-x86_64.pkg.tar.zst \
-   Messenger.El.Nacio-0.1.1-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
+mv messenger-el-nacio-bin-0.1.2-1-x86_64.pkg.tar.zst \
+   Messenger.El.Nacio-0.1.2-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
 ```
 
 ## Actualizar la versión

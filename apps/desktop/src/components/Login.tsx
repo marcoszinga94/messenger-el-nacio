@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useApp } from '../store';
 import { getServer } from '../session';
+import { version } from '../../package.json';
 import { Butterfly } from './TitleBar';
 
 type Mode = 'login' | 'register';
@@ -163,7 +164,7 @@ export function Login() {
         </div>
 
         <div className="login-statusbar">
-          <span>Messenger El Nacio v0.1</span>
+          <span>Messenger El Nacio v{version}</span>
           <span>{server.replace(/^https?:\/\//, '')}</span>
         </div>
       </div>
