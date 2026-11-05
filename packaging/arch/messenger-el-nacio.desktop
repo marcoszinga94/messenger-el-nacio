@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Messenger El Nacio
+Comment=Mensajería instantánea de la institución
+Exec=messenger-el-nacio
+Icon=messenger-el-nacio
+Terminal=false
+Categories=Network;InstantMessaging;Chat;
+StartupNotify=true
+StartupWMClass=messenger-el-nacio

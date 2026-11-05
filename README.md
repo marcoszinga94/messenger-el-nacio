@@ -25,9 +25,27 @@ La misma aplicación se empaqueta en varios formatos:
 | `.AppImage` | Casi cualquier distro x86_64 | `chmod +x` y doble clic. No se instala. |
 | `.deb` | Debian, Ubuntu, Mint, Pop!_OS | `sudo apt install ./archivo.deb` |
 | `.rpm` | Fedora, openSUSE, RHEL | `sudo dnf install ./archivo.rpm` |
+| `.pkg.tar.zst` | Arch Linux y CachyOS | `sudo pacman -U ./messenger-el-nacio-bin-0.1.1-1-x86_64.pkg.tar.zst` |
 | `.tar.gz` | Cualquier distro moderna | Descomprimir y ejecutar el binario. |
 
-Requisitos: **WebKitGTK 4.1** (Ubuntu 22.04+, Debian 12+, Fedora 36 o superior) y arquitectura **x86_64**. En distros muy viejas con WebKitGTK 4.0 hay que actualizar el sistema o usar otra máquina. Para AppImage en Ubuntu 24.04 puede hacer falta `libfuse2`; si no, se puede ejecutar con `--appimage-extract-and-run`.
+El **AppImage** incluye WebKitGTK y GTK, así que es la opción más portable. Los paquetes `.deb`, `.rpm` y `.pkg.tar.zst` usan el WebKitGTK del sistema.
+
+Requisitos: arquitectura **x86_64** y glibc 2.35 o superior (Ubuntu 22.04+, Debian 12+, Fedora 36+, Arch/CachyOS actuales). En distros muy viejas con WebKitGTK 4.0 hay que actualizar el sistema o usar otra máquina. Para AppImage en Ubuntu 24.04 puede hacer falta `libfuse2`; si no, se puede ejecutar con `--appimage-extract-and-run`.
+
+### Arch Linux / CachyOS
+
+El paquete nativo se puede instalar directo:
+
+```bash
+sudo pacman -U messenger-el-nacio-bin-0.1.1-1-x86_64.pkg.tar.zst
+```
+
+O compilarlo desde el `PKGBUILD` del repositorio:
+
+```bash
+cd packaging/arch
+makepkg -si
+```
 
 ## Funciones
 

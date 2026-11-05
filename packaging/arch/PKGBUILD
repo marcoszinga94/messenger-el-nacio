@@ -1,0 +1,30 @@
+# Mantenedor: Marcos Zingaretti <marcoszinga94@users.noreply.github.com>
+pkgname=messenger-el-nacio-bin
+pkgver=0.1.1
+pkgrel=1
+pkgdesc="Mensajería instantánea estilo MSN para la institución"
+arch=('x86_64')
+url="https://github.com/marcoszinga94/messenger-el-nacio"
+license=('custom')
+depends=('webkit2gtk-4.1' 'gtk3' 'libsoup3' 'openssl' 'glibc' 'gcc-libs')
+provides=('messenger-el-nacio')
+conflicts=('messenger-el-nacio')
+options=('!strip')
+source=(
+  "messenger-el-nacio-$pkgver.tar.gz::https://github.com/marcoszinga94/messenger-el-nacio/releases/download/v$pkgver/messenger-el-nacio_${pkgver}_linux-x64.tar.gz"
+  "messenger-el-nacio.desktop"
+  "messenger-el-nacio.png"
+)
+sha256sums=(
+  'd1c3b81f7495dc19451a97cc16c51a2e127e98ea7e21cab05b70184d6e7064c3'
+  '70bead3e2546f0f44153b14e3e92b24d621c7ee4e7da36d49b8148ce88724d66'
+  'd43a31fd424cc9c889ea758a451208eb74a4ab8cd1830aec05d13effb9f0db03'
+)
+
+package() {
+  install -Dm755 "$srcdir/messenger-el-nacio" "$pkgdir/usr/bin/messenger-el-nacio"
+  install -Dm644 "$srcdir/messenger-el-nacio.desktop" \
+    "$pkgdir/usr/share/applications/messenger-el-nacio.desktop"
+  install -Dm644 "$srcdir/messenger-el-nacio.png" \
+    "$pkgdir/usr/share/icons/hicolor/512x512/apps/messenger-el-nacio.png"
+}
