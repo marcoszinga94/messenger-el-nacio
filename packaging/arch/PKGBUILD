@@ -11,7 +11,7 @@ provides=('messenger-el-nacio')
 conflicts=('messenger-el-nacio')
 options=('!strip')
 source=(
-  "messenger-el-nacio-$pkgver.tar.gz::https://github.com/marcoszinga94/messenger-el-nacio/releases/download/v$pkgver/messenger-el-nacio_${pkgver}_linux-x64.tar.gz"
+  "messenger-el-nacio-$pkgver.tar.gz::https://github.com/marcoszinga94/messenger-el-nacio/releases/download/v$pkgver/Messenger.El.Nacio-${pkgver}-Linux-Portable-x86_64.tar.gz"
   "messenger-el-nacio.desktop"
   "messenger-el-nacio.png"
 )

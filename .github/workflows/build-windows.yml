@@ -32,13 +32,25 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
+      - name: Leer versión
+        shell: bash
+        run: echo "VERSION=$(node -p 'require("./apps/desktop/package.json").version')" >> "$GITHUB_ENV"
+
       - name: Compilar cliente Tauri
         run: pnpm --filter @nacio/desktop tauri build --bundles nsis
+
+      - name: Renombrar instalador
+        shell: bash
+        run: |
+          cd apps/desktop/src-tauri/target/release/bundle/nsis
+          for file in *.exe; do
+            mv "$file" "Messenger.El.Nacio-${VERSION}-Windows-x64-Setup.exe"
+          done
 
       - name: Subir instalador como artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
+          name: Messenger.El.Nacio-Windows-x64
           path: apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
 
@@ -82,6 +94,9 @@ jobs:
       - name: Instalar dependencias del proyecto
         run: pnpm install --frozen-lockfile
 
+      - name: Leer versión
+        run: echo "VERSION=$(node -p 'require("./apps/desktop/package.json").version')" >> "$GITHUB_ENV"
+
       - name: Compilar paquetes Linux
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
@@ -95,12 +110,20 @@ jobs:
             BIN=$(find apps/desktop/src-tauri/target/release -maxdepth 1 -type f -perm -u+x -name '*essenger*' | head -1)
           fi
           cp "$BIN" portable/messenger-el-nacio
-          tar -czf apps/desktop/src-tauri/target/release/bundle/messenger-el-nacio_0.1.1_linux-x64.tar.gz -C portable messenger-el-nacio
+          tar -czf "apps/desktop/src-tauri/target/release/bundle/Messenger.El.Nacio-${VERSION}-Linux-Portable-x86_64.tar.gz" -C portable messenger-el-nacio
+
+      - name: Renombrar paquetes
+        run: |
+          bundle="apps/desktop/src-tauri/target/release/bundle"
+          mv "$bundle"/appimage/*.AppImage "$bundle/appimage/Messenger.El.Nacio-${VERSION}-Linux-AppImage-x86_64.AppImage"
+          mv "$bundle"/deb/*.deb "$bundle/deb/Messenger.El.Nacio-${VERSION}-Linux-Ubuntu-Debian-amd64.deb"
+          mv "$bundle"/rpm/*.rpm "$bundle/rpm/Messenger.El.Nacio-${VERSION}-Linux-Fedora-openSUSE-x86_64.rpm"
+          ls -lh "$bundle/appimage" "$bundle/deb" "$bundle/rpm" "$bundle"/*.tar.gz
 
       - name: Subir paquetes como artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: linux-packages
+          name: Messenger.El.Nacio-Linux-x86_64
           path: |
             apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage
             apps/desktop/src-tauri/target/release/bundle/deb/*.deb
