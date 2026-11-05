@@ -1,0 +1,52 @@
+name: Compilar cliente Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Instalador Windows
+    runs-on: windows-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Instalar Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Instalar Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Compilar cliente Tauri
+        run: pnpm --filter @nacio/desktop tauri build --bundles nsis
+
+      - name: Subir instalador como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: messenger-el-nacio-windows
+          path: apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+      - name: Publicar release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+          generate_release_notes: true

@@ -1,0 +1,21 @@
+{
+  "name": "messenger-el-nacio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mensajería instantánea estilo MSN para la institución",
+  "packageManager": "pnpm@11.13.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @nacio/server --filter @nacio/admin --filter @nacio/desktop dev",
+    "dev:server": "pnpm --filter @nacio/server dev",
+    "dev:admin": "pnpm --filter @nacio/admin dev",
+    "dev:desktop": "pnpm --filter @nacio/desktop dev",
+    "build": "pnpm --filter @nacio/server build && pnpm --filter @nacio/admin build && pnpm --filter @nacio/desktop build",
+    "build:server": "pnpm --filter @nacio/server build",
+    "start": "pnpm --filter @nacio/server start",
+    "test": "pnpm --filter @nacio/server test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

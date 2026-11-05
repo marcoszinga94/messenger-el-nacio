@@ -1,0 +1,29 @@
+{
+  "name": "@nacio/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm --target node24 --out-dir dist --clean --sourcemap",
+    "start": "node dist/index.js",
+    "test": "node --test --import tsx test/api.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/static": "^8.2.0",
+    "@nacio/shared": "workspace:*",
+    "fastify": "^5.6.1",
+    "jose": "^6.1.0",
+    "socket.io": "^4.8.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

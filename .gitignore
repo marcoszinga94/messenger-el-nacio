@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+release/
+target/
+*.log
+.env
+.env.*
+!.env.example
+data/
+.DS_Store
+.vite/
+coverage/
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/target/
