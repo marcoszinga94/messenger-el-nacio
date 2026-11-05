@@ -83,6 +83,12 @@ makepkg -si
 - Registro con código de invitación.
 - HTTPS automático con Caddy y despliegue en Windows.
 
+## Avisos de actualización
+
+El cliente compara su versión con la última release publicada y muestra un aviso con el enlace de descarga. Consulta primero `GET /api/version` del servidor (que cachea la API de GitHub) y, si el servidor todavía no tiene ese endpoint, consulta GitHub directamente. Se revisa al iniciar la aplicación y cada 6 horas; también se puede forzar desde **Ayuda → Buscar actualizaciones…**.
+
+El repositorio se puede cambiar con `UPDATE_REPO` en el servidor y `VITE_UPDATE_REPO` al compilar el cliente.
+
 ## Stack
 
 - **Servidor:** Node 24, Fastify 5, Socket.IO, SQLite (`node:sqlite`), JWT, scrypt.
