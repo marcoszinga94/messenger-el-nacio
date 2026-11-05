@@ -1,6 +1,6 @@
 # Messenger El Nacio
 
-[![Compilar cliente Windows](https://github.com/marcoszinga94/messenger-el-nacio/actions/workflows/build-windows.yml/badge.svg)](https://github.com/marcoszinga94/messenger-el-nacio/actions/workflows/build-windows.yml)
+[![Compilar clientes](https://github.com/marcoszinga94/messenger-el-nacio/actions/workflows/build-windows.yml/badge.svg)](https://github.com/marcoszinga94/messenger-el-nacio/actions/workflows/build-windows.yml)
 
 Cliente de mensajería instantánea estilo MSN para una institución educativa. Servidor propio, clientes de escritorio para Windows y Linux, y panel de administración web.
 
@@ -8,11 +8,26 @@ Cliente de mensajería instantánea estilo MSN para una institución educativa. 
 
 ## Descargar el cliente
 
-El instalador de Windows se publica en [Releases](https://github.com/marcoszinga94/messenger-el-nacio/releases/latest).
+Los instaladores se publican en [Releases](https://github.com/marcoszinga94/messenger-el-nacio/releases/latest).
 
-1. Descargar `Messenger El Nacio_0.1.0_x64-setup.exe`.
+### Windows
+
+1. Descargar `Messenger.El.Nacio_0.1.1_x64-setup.exe`.
 2. Ejecutarlo. Si Windows muestra SmartScreen, elegir **Más información → Ejecutar de todas formas** (el instalador no tiene firma digital paga).
 3. Abrir el cliente y registrarse con el código de invitación del curso, o iniciar sesión si ya tenés cuenta.
+
+### Linux
+
+La misma aplicación se empaqueta en varios formatos:
+
+| Formato | Para quién | Cómo se usa |
+| --- | --- | --- |
+| `.AppImage` | Casi cualquier distro x86_64 | `chmod +x` y doble clic. No se instala. |
+| `.deb` | Debian, Ubuntu, Mint, Pop!_OS | `sudo apt install ./archivo.deb` |
+| `.rpm` | Fedora, openSUSE, RHEL | `sudo dnf install ./archivo.rpm` |
+| `.tar.gz` | Cualquier distro moderna | Descomprimir y ejecutar el binario. |
+
+Requisitos: **WebKitGTK 4.1** (Ubuntu 22.04+, Debian 12+, Fedora 36 o superior) y arquitectura **x86_64**. En distros muy viejas con WebKitGTK 4.0 hay que actualizar el sistema o usar otra máquina. Para AppImage en Ubuntu 24.04 puede hacer falta `libfuse2`; si no, se puede ejecutar con `--appimage-extract-and-run`.
 
 ## Funciones
 
@@ -110,7 +125,7 @@ La guía completa está en [docs/DEPLOY-WINDOWS.md](docs/DEPLOY-WINDOWS.md). Res
 
 ## Estado
 
-Versión 0.1.0. El cliente de Windows se compila con Tauri. El cliente de Linux (AppImage/deb) se agrega en la próxima etapa.
+Versión 0.1.1. Clientes de Windows (NSIS) y Linux (AppImage, deb, rpm y binario portable) compilados con Tauri.
 
 ## Licencia
 
