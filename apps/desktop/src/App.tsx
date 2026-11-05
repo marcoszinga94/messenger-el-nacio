@@ -47,9 +47,14 @@ export function App() {
           event.preventDefault();
           endSession();
           try {
-            await appWindow.close();
+            // destroy() cierra la ventana y termina el proceso, sin volver al login.
+            await appWindow.destroy();
           } catch {
-            closing.current = false;
+            try {
+              await appWindow.close();
+            } catch {
+              closing.current = false;
+            }
           }
         });
         if (cancelled) off();
@@ -101,10 +106,14 @@ export function App() {
     endSession();
     closing.current = true;
     void getCurrentWindow()
-      .close()
-      .catch(() => {
-        closing.current = false;
-      });
+      .destroy()
+      .catch(() =>
+        getCurrentWindow()
+          .close()
+          .catch(() => {
+            closing.current = false;
+          }),
+      );
   }
 
   const activeConversation = activeId
