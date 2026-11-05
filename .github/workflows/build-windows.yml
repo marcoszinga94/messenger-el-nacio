@@ -131,10 +131,56 @@ jobs:
             apps/desktop/src-tauri/target/release/bundle/*.tar.gz
           if-no-files-found: error
 
+  arch:
+    name: Arch Linux
+    needs: [linux]
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Instalar herramientas base
+        run: pacman -Syu --noconfirm --needed git base-devel
+
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Descargar binario portable
+        uses: actions/download-artifact@v4
+        with:
+          name: Messenger.El.Nacio-Linux-x86_64
+          path: linux-artifacts
+
+      - name: Preparar versión
+        run: |
+          VERSION=$(basename linux-artifacts/*-Linux-Portable-x86_64.tar.gz)
+          VERSION=${VERSION#Messenger.El.Nacio-}
+          VERSION=${VERSION%-Linux-Portable-x86_64.tar.gz}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          cp "linux-artifacts/Messenger.El.Nacio-${VERSION}-Linux-Portable-x86_64.tar.gz" \
+            "packaging/arch/messenger-el-nacio-${VERSION}.tar.gz"
+
+      - name: Compilar paquete Arch
+        run: |
+          useradd -m builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          su builder -c "cd '$GITHUB_WORKSPACE/packaging/arch' && MESSENGER_PKGVER='$VERSION' MESSENGER_PORTABLE_TARBALL='$GITHUB_WORKSPACE/packaging/arch/messenger-el-nacio-${VERSION}.tar.gz' makepkg -f --nodeps"
+
+      - name: Renombrar paquete
+        run: |
+          mv "packaging/arch/messenger-el-nacio-bin-${VERSION}-1-x86_64.pkg.tar.zst" \
+            "Messenger.El.Nacio-${VERSION}-Linux-Arch-CachyOS-x86_64.pkg.tar.zst"
+
+      - name: Subir paquete como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: Messenger.El.Nacio-Linux-Arch-x86_64
+          path: Messenger.El.Nacio-*-Linux-Arch-CachyOS-x86_64.pkg.tar.zst
+          if-no-files-found: error
+
   release:
     name: Publicar release
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [windows, linux]
+    needs: [windows, linux, arch]
     runs-on: ubuntu-latest
     steps:
       - name: Descargar artefactos
