@@ -1,8 +1,18 @@
 # Messenger El Nacio
 
+[![Compilar cliente Windows](https://github.com/marcoszinga94/messenger-el-nacio/actions/workflows/build-windows.yml/badge.svg)](https://github.com/marcoszinga94/messenger-el-nacio/actions/workflows/build-windows.yml)
+
 Cliente de mensajería instantánea estilo MSN para una institución educativa. Servidor propio, clientes de escritorio para Windows y Linux, y panel de administración web.
 
 ![Captura del cliente](docs/screenshot.png)
+
+## Descargar el cliente
+
+El instalador de Windows se publica en [Releases](https://github.com/marcoszinga94/messenger-el-nacio/releases/latest).
+
+1. Descargar `Messenger El Nacio_0.1.0_x64-setup.exe`.
+2. Ejecutarlo. Si Windows muestra SmartScreen, elegir **Más información → Ejecutar de todas formas** (el instalador no tiene firma digital paga).
+3. Abrir el cliente y registrarse con el código de invitación del curso, o iniciar sesión si ya tenés cuenta.
 
 ## Funciones
 
