@@ -445,6 +445,13 @@ input:not([type='checkbox']):focus {
   accent-color: var(--blue-600);
 }
 
+.sep {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 6px 0;
+  width: 100%;
+}
+
 /* ---------- Tables ---------- */
 
 .table-wrap {

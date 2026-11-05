@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import type { AdminSettings, AdminStats, AuditEntry, Invite, Me } from '@nacio/shared';
 import { getSession, login, logout, request, setSession, type Session } from './api';
 
+
 type Tab = 'resumen' | 'usuarios' | 'invitaciones' | 'salas' | 'ajustes' | 'auditoria';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -688,6 +689,8 @@ function Settings() {
   const [settings, setSettings] = useState<AdminSettings | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
     request<{ settings: AdminSettings }>('/api/admin/settings')
@@ -709,6 +712,25 @@ function Settings() {
       setTimeout(() => setNotice(''), 2500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar.');
+    }
+  }
+
+  async function changePassword() {
+    setError('');
+    if (newPassword.length < 8) {
+      setError('La contraseña nueva necesita al menos 8 caracteres.');
+      return;
+    }
+    try {
+      await request('/api/me/password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      setNotice('Contraseña cambiada. Iniciá sesión de nuevo.');
+      setSession(null);
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo cambiar la contraseña.');
     }
   }
 
@@ -761,6 +783,33 @@ function Settings() {
 
       <div>
         <button className="btn primary">Guardar ajustes</button>
+      </div>
+
+      <hr className="sep" />
+
+      <h3>Mi contraseña</h3>
+      <label>
+        Contraseña actual
+        <input
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          autoComplete="current-password"
+        />
+      </label>
+      <label>
+        Contraseña nueva
+        <input
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          autoComplete="new-password"
+        />
+      </label>
+      <div>
+        <button type="button" className="btn" disabled={!currentPassword || !newPassword} onClick={() => void changePassword()}>
+          Cambiar contraseña
+        </button>
       </div>
     </form>
   );
