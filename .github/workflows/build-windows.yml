@@ -83,6 +83,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Compilar paquetes Linux
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
         run: pnpm --filter @nacio/desktop tauri build --bundles appimage,deb,rpm
 
       - name: Armar binario portable
