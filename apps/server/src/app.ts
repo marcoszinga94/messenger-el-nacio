@@ -93,7 +93,12 @@ export async function buildApp() {
   const seed = ensureSeed(db);
   app.decorate('db', db);
 
-  await app.register(cors, { origin: config.corsOrigins });
+  await app.register(cors, {
+    origin: config.corsOrigins,
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86_400,
+  });
   await app.register(rateLimit, {
     max: config.isTest ? 100_000 : 600,
     timeWindow: '1 minute',
