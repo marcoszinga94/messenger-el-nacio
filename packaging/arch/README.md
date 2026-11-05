@@ -19,7 +19,9 @@ makepkg -si
 
 `makepkg` descarga el binario portable del release correspondiente, verifica su SHA-256 y arma el paquete con el lanzador, el icono y el archivo `.desktop`.
 
-Dependencias de ejecución: `webkit2gtk-4.1`, `gtk3`, `libsoup3`, `openssl`, `glibc` y `gcc-libs`.
+Dependencias de ejecución: `webkit2gtk-4.1`, `gtk3`, `libsoup3`, `openssl`, `glibc`, `gcc-libs` y `gst-plugins-good`.
+
+`gst-plugins-good` es necesario para los sonidos y zumbidos: sin él, WebKitGTK puede abortar al reproducir audio. El paquete lo instala automáticamente con pacman.
 
 ## Nombre del archivo publicado
 

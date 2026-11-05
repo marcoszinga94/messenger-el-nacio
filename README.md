@@ -51,6 +51,16 @@ El **AppImage** incluye WebKitGTK y GTK, así que es la opción más portable. L
 
 Requisitos: arquitectura **x86_64** y glibc 2.35 o superior (Ubuntu 22.04+, Debian 12+, Fedora 36+, Arch/CachyOS actuales). En distros muy viejas con WebKitGTK 4.0 hay que actualizar el sistema o usar otra máquina. Para AppImage en Ubuntu 24.04 puede hacer falta `libfuse2`; si no, se puede ejecutar con `--appimage-extract-and-run`.
 
+Para los sonidos y zumbidos hace falta el plugin de GStreamer:
+
+| Distro | Paquete |
+| --- | --- |
+| Arch / CachyOS | `gst-plugins-good` |
+| Debian / Ubuntu | `gstreamer1.0-plugins-good` |
+| Fedora | `gstreamer1-plugins-good` |
+
+Sin ese plugin, el cliente desactiva el audio automáticamente para evitar que WebKitGTK se cierre.
+
 ### Arch Linux / CachyOS
 
 El paquete nativo se puede instalar directo:

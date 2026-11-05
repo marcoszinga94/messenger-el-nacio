@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { setAudioSupported } from './sounds';
 import { useApp } from './store';
 import { Login } from './components/Login';
 import { Main } from './components/Main';
@@ -23,6 +25,8 @@ export function App() {
   const dismissUpdate = useApp((state) => state.dismissUpdate);
   const openUpdate = useApp((state) => state.openUpdate);
   const endSession = useApp((state) => state.endSession);
+  const setSound = useApp((state) => state.setSound);
+  const setToast = useApp((state) => state.setToast);
   const activeId = useApp((state) => state.activeId);
   const conversations = useApp((state) => state.conversations);
   const contacts = useApp((state) => state.contacts);
@@ -32,6 +36,22 @@ export function App() {
   useEffect(() => {
     void initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    if (!inTauri) {
+      setAudioSupported(true);
+      return;
+    }
+    void invoke<boolean>('audio_available')
+      .then((available) => {
+        setAudioSupported(available);
+        if (!available) {
+          setSound(false);
+          setToast('Sonido desactivado: falta el plugin gst-plugins-good en el sistema.');
+        }
+      })
+      .catch(() => setAudioSupported(false));
+  }, [setSound, setToast]);
 
   useEffect(() => {
     if (!inTauri) return;
