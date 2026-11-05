@@ -103,6 +103,19 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at DESC);
 `;
 
+const SCHEMA_V2 = `
+CREATE TABLE IF NOT EXISTS files (
+  id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  mime TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  duration INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_files_owner ON files(owner_id);
+`;
+
 export function openDatabase(dataDir: string): Db {
   const db = new DatabaseSync(path.join(dataDir, 'messenger.db'));
   db.exec('PRAGMA journal_mode = WAL;');
@@ -114,6 +127,15 @@ export function openDatabase(dataDir: string): Db {
   if (version < 1) {
     db.exec(SCHEMA_V1);
     db.exec('PRAGMA user_version = 1;');
+  }
+  if (version < 2) {
+    db.exec(SCHEMA_V2);
+    const columns = db.prepare('PRAGMA table_info(messages)').all() as { name: string }[];
+    if (!columns.some((column) => column.name === 'file_id')) {
+      db.exec('ALTER TABLE messages ADD COLUMN file_id TEXT REFERENCES files(id) ON DELETE SET NULL;');
+    }
+    db.exec('CREATE INDEX IF NOT EXISTS idx_messages_file ON messages(file_id);');
+    db.exec('PRAGMA user_version = 2;');
   }
   return db;
 }

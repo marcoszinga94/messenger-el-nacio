@@ -4,6 +4,8 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
+import multipart from '@fastify/multipart';
+import { FILE_MAX_BYTES } from '@nacio/shared';
 import { config } from './config.js';
 import { getSettings, openDatabase } from './db.js';
 import { ensureSeed } from './seed.js';
@@ -13,6 +15,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import contactRoutes from './routes/contacts.js';
 import conversationRoutes from './routes/conversations.js';
+import fileRoutes from './routes/files.js';
 import adminRoutes from './routes/admin.js';
 import type { UserRow } from './serialize.js';
 
@@ -103,6 +106,9 @@ export async function buildApp() {
     max: config.isTest ? 100_000 : 600,
     timeWindow: '1 minute',
   });
+  await app.register(multipart, {
+    limits: { fileSize: FILE_MAX_BYTES, files: 1, fields: 4 },
+  });
 
   app.decorate('authenticate', async (request, reply) => {
     const header = request.headers.authorization;
@@ -159,6 +165,7 @@ export async function buildApp() {
   await app.register(userRoutes, { prefix: '/api' });
   await app.register(contactRoutes, { prefix: '/api' });
   await app.register(conversationRoutes, { prefix: '/api' });
+  await app.register(fileRoutes, { prefix: '/api' });
   await app.register(adminRoutes, { prefix: '/api/admin' });
 
   if (existsSync(adminDist)) {

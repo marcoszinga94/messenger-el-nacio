@@ -8,7 +8,15 @@ export type ContactState = 'pending' | 'accepted' | 'blocked';
 
 export type ConversationType = 'dm' | 'group';
 
-export type MessageKind = 'text' | 'system' | 'nudge';
+export type MessageKind = 'text' | 'system' | 'nudge' | 'file' | 'voice' | 'game' | 'wink';
+
+export interface Attachment {
+  id: string;
+  name: string;
+  mime: string;
+  size: number;
+  duration: number | null;
+}
 
 export interface PublicUser {
   id: string;
@@ -59,6 +67,7 @@ export interface Message {
   sender: PublicUser | null;
   kind: MessageKind;
   body: string;
+  attachment?: Attachment | null;
   createdAt: number;
 }
 

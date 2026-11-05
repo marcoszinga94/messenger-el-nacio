@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import type { ContactEntry, ConversationSummary, SearchResult } from '@nacio/shared';
 import { AVATARS } from '@nacio/shared';
 import { api } from '../api';
+import { CHAT_BACKGROUNDS } from '../backgrounds';
 import { getServer } from '../session';
 import { useApp } from '../store';
 import { contactName, conversationPeer, conversationTitle } from '../utils';
@@ -431,6 +432,41 @@ export function SettingsModal({
         </div>
         <small className="muted">Messenger El Nacio v0.1 · Tauri + React</small>
       </section>
+    </Modal>
+  );
+}
+
+export function BackgroundModal({
+  conversationId,
+  onClose,
+}: {
+  conversationId: string;
+  onClose: () => void;
+}) {
+  const current = useApp((state) => state.backgrounds[conversationId] ?? 'default');
+  const setBackground = useApp((state) => state.setBackground);
+
+  return (
+    <Modal title="Fondo de la conversación" onClose={onClose}>
+      <p className="modal-help">Se guarda solo en esta computadora y solo para esta conversación.</p>
+      <div className="background-grid">
+        {CHAT_BACKGROUNDS.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            className={`background-option ${current === preset.id ? 'selected' : ''}`}
+            onClick={() => setBackground(conversationId, preset.id)}
+          >
+            <span className="background-swatch" style={{ background: preset.css }} />
+            <small>{preset.label}</small>
+          </button>
+        ))}
+      </div>
+      <div className="modal-actions">
+        <button type="button" className="big-button compact" onClick={onClose}>
+          Listo
+        </button>
+      </div>
     </Modal>
   );
 }

@@ -10,6 +10,8 @@ try {
 
 const dataDir = path.resolve(process.env.DATA_DIR ?? 'data');
 mkdirSync(dataDir, { recursive: true });
+const uploadsDir = path.join(dataDir, 'uploads');
+mkdirSync(uploadsDir, { recursive: true });
 
 const secretPath = path.join(dataDir, 'jwt-secret');
 if (!existsSync(secretPath)) {
@@ -42,6 +44,7 @@ export const config = {
   port: Number(process.env.PORT ?? 3000),
   host: process.env.HOST ?? '0.0.0.0',
   dataDir,
+  uploadsDir,
   publicUrl: process.env.PUBLIC_URL ?? '',
   releasesUrl: process.env.RELEASES_URL ?? 'https://github.com/marcoszinga94/messenger-el-nacio/releases/latest',
   corsOrigins: [...new Set([...defaultOrigins, ...extraOrigins])],

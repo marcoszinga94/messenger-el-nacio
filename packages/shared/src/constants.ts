@@ -6,6 +6,7 @@ export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 128;
 
 export const MESSAGE_MAX = 2000;
+export const FILE_MAX_BYTES = 25 * 1024 * 1024;
 export const DISPLAY_NAME_MAX = 40;
 export const STATUS_MESSAGE_MAX = 140;
 export const GROUP_NAME_MAX = 40;
@@ -47,3 +48,14 @@ export const STATUS_COLORS: Record<string, string> = {
 };
 
 export const SOCKET_PATH = '/socket.io';
+
+/** Guiños clásicos que se pueden mandar a una conversación. */
+export const WINKS = [
+  { id: 'beso', emoji: '💋', label: 'Beso volador' },
+  { id: 'corazon', emoji: '💖', label: 'Corazón gigante' },
+  { id: 'fiesta', emoji: '🎉', label: 'Fiesta' },
+  { id: 'dormir', emoji: '😴', label: 'Sueño' },
+  { id: 'lluvia', emoji: '🌧️', label: 'Lluvia de estrellas' },
+] as const;
+
+export type WinkId = (typeof WINKS)[number]['id'];

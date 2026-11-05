@@ -66,12 +66,27 @@ export const addMembersSchema = z.object({
   userIds: z.array(z.string().min(1)).min(1).max(200),
 });
 
-export const messageSchema = z.object({
-  body: z.string().trim().min(1, 'El mensaje está vacío.').max(MESSAGE_MAX, 'El mensaje es demasiado largo.'),
-});
+export const messageSchema = z
+  .object({
+    body: z
+      .string()
+      .trim()
+      .max(MESSAGE_MAX, 'El mensaje es demasiado largo.')
+      .optional()
+      .default(''),
+    fileId: z.string().min(1).max(64).optional(),
+  })
+  .refine((value) => Boolean(value.fileId) || value.body.length > 0, {
+    message: 'El mensaje está vacío.',
+    path: ['body'],
+  });
 
 export const nudgeSchema = z.object({
   conversationId: z.string().min(1),
+});
+
+export const winkSchema = z.object({
+  wink: z.string().trim().min(1).max(32),
 });
 
 export const inviteSchema = z.object({

@@ -1,8 +1,12 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import type { ConversationSummary, Message } from '@nacio/shared';
-import { EMOTICONS, renderEmoticons } from '@nacio/shared';
-import { version } from '../../package.json';
+import { EMOTICONS, FILE_MAX_BYTES, WINKS } from '@nacio/shared';
 import { useApp } from '../store';
+import { backgroundCss } from '../backgrounds';
+import { renderRichText, FORMAT_MARKERS } from '../richText';
+import { AttachmentView } from './Attachments';
+import { ActivitiesModal, GamesModal } from './Games';
+import { BackgroundModal } from './Modals';
 import { Wordmark } from './TitleBar';
 import {
   canManageGroup,
@@ -34,7 +38,9 @@ export function Chat({
   const typing = useApp((state) => state.typing);
   const connection = useApp((state) => state.connection);
   const sendMessage = useApp((state) => state.sendMessage);
+  const sendAttachment = useApp((state) => state.sendAttachment);
   const sendNudge = useApp((state) => state.sendNudge);
+  const backgrounds = useApp((state) => state.backgrounds);
   const notifyTyping = useApp((state) => state.notifyTyping);
   const openConversation = useApp((state) => state.openConversation);
   const closeConversation = useApp((state) => state.closeConversation);
@@ -51,13 +57,24 @@ export function Chat({
 
   const [text, setText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
+  const [showFormat, setShowFormat] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [modal, setModal] = useState<'games' | 'activities' | 'background' | null>(null);
   const [search, setSearch] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const typingSent = useRef(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recordStartRef = useRef(0);
+  const recordConversationRef = useRef<string | null>(null);
+  const recordChunks = useRef<Blob[]>([]);
+  const recordTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -78,6 +95,13 @@ export function Chat({
       if (typingTimer.current) clearTimeout(typingTimer.current);
     };
   }, [conversationId, notifyTyping]);
+
+  useEffect(() => {
+    return () => {
+      if (recordTimer.current) clearInterval(recordTimer.current);
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
 
   if (!activeConversation || !session) {
     return <div className="chat-missing">Conversación no disponible.</div>;
@@ -106,7 +130,11 @@ export function Chat({
 
   const query = search.trim().toLowerCase();
   const visibleMessages = query
-    ? messages.filter((message) => message.body.toLowerCase().includes(query))
+    ? messages.filter(
+        (message) =>
+          message.body.toLowerCase().includes(query) ||
+          (message.attachment?.name.toLowerCase().includes(query) ?? false),
+      )
     : messages;
 
   function handleChange(value: string) {
@@ -148,8 +176,100 @@ export function Chat({
     setToast('Creá un grupo para invitar a más compañeros.');
   }
 
-  function notAvailable() {
-    setToast('Todavía no está disponible en esta versión.');
+  function applyFormat(prefix: string, suffix: string) {
+    const input = inputRef.current;
+    const start = input?.selectionStart ?? text.length;
+    const end = input?.selectionEnd ?? text.length;
+    const selected = text.slice(start, end) || 'texto';
+    const next = `${text.slice(0, start)}${prefix}${selected}${suffix}${text.slice(end)}`;
+    setText(next);
+    setShowFormat(false);
+    requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
+    });
+  }
+
+  function pickFiles() {
+    fileInputRef.current?.click();
+  }
+
+  async function onFilesSelected(event: ChangeEvent<HTMLInputElement>) {
+    const files = [...(event.target.files ?? [])];
+    event.target.value = '';
+    for (const file of files) {
+      if (file.size > FILE_MAX_BYTES) {
+        setToast(`${file.name} supera los ${Math.round(FILE_MAX_BYTES / (1024 * 1024))} MB.`);
+        continue;
+      }
+      await sendAttachment(file, file.name);
+    }
+  }
+
+  async function startRecording() {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setToast('Este equipo no permite grabar audio desde la aplicación.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferred = 'audio/webm;codecs=opus';
+      const options = MediaRecorder.isTypeSupported(preferred) ? { mimeType: preferred } : undefined;
+      const recorder = new MediaRecorder(stream, options);
+      recordChunks.current = [];
+      recordStartRef.current = Date.now();
+      recordConversationRef.current = conversation.id;
+      recorder.ondataavailable = (chunk) => {
+        if (chunk.data.size > 0) recordChunks.current.push(chunk.data);
+      };
+      recorderRef.current = recorder;
+      streamRef.current = stream;
+      setRecording(true);
+      setRecordSeconds(0);
+      recorder.start();
+      recordTimer.current = setInterval(() => {
+        setRecordSeconds(Math.floor((Date.now() - recordStartRef.current) / 1000));
+      }, 250);
+    } catch {
+      setToast('No pudimos acceder al micrófono. Revisá los permisos del sistema.');
+    }
+  }
+
+  function stopRecording(send: boolean) {
+    const recorder = recorderRef.current;
+    if (!recorder) return;
+    const duration = (Date.now() - recordStartRef.current) / 1000;
+    if (recordTimer.current) clearInterval(recordTimer.current);
+    recordTimer.current = null;
+
+    recorder.onstop = () => {
+      const blob = new Blob(recordChunks.current, { type: recorder.mimeType || 'audio/webm' });
+      recordChunks.current = [];
+      recorderRef.current = null;
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setRecording(false);
+      setRecordSeconds(0);
+      const target = recordConversationRef.current;
+      recordConversationRef.current = null;
+      if (send && blob.size > 0) {
+        if (useApp.getState().activeId !== target) {
+          setToast('Se canceló la nota de voz porque cambiaste de conversación.');
+        } else {
+          void sendAttachment(blob, `nota-de-voz-${Date.now()}.webm`, duration);
+        }
+      }
+    };
+
+    if (recorder.state !== 'inactive') {
+      recorder.stop();
+    } else {
+      recorderRef.current = null;
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setRecording(false);
+      setRecordSeconds(0);
+    }
   }
 
   async function handleBlock() {
@@ -211,11 +331,9 @@ export function Chat({
     <div className="chat">
       <div className="chat-toolbar">
         <ToolButton icon="👤" label="Invitar" onClick={handleInvite} />
-        <ToolButton icon="📁" label="Enviar archivos" onClick={notAvailable} />
-        <ToolButton icon="🎥" label="Videollamada" onClick={notAvailable} />
-        <ToolButton icon="🎤" label="Voz" onClick={notAvailable} />
-        <ToolButton icon="⭐" label="Actividades" onClick={notAvailable} />
-        <ToolButton icon="🎮" label="Juegos" onClick={notAvailable} />
+        <ToolButton icon="📁" label="Enviar archivos" onClick={pickFiles} />
+        <ToolButton icon="⭐" label="Actividades" onClick={() => setModal('activities')} />
+        <ToolButton icon="🎮" label="Juegos" onClick={() => setModal('games')} />
         <span className="toolbar-spacer" />
         <Wordmark />
         <button
@@ -236,6 +354,14 @@ export function Chat({
           ?
         </button>
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        hidden
+        onChange={(event) => void onFilesSelected(event)}
+      />
 
       {!isOnline && (
         <div className="offline-banner">Sin conexión con el servidor. Los mensajes no se van a enviar.</div>
@@ -295,7 +421,11 @@ export function Chat({
             </div>
           )}
 
-          <div className="messages" ref={scrollRef}>
+          <div
+            className="messages"
+            ref={scrollRef}
+            style={backgroundCss(backgrounds[conversation.id]) ? { background: backgroundCss(backgrounds[conversation.id]) } : undefined}
+          >
             {messages.length === 0 && (
               <div className="messages-empty">
                 <p>Todavía no hay mensajes.</p>
@@ -331,6 +461,45 @@ export function Chat({
                     <div className="nudge-line">💥 {own ? 'Mandaste' : `${author} mandó`} un zumbido</div>
                   )}
 
+                  {message.kind === 'game' && (
+                    <div className="nudge-line game-line">{describeGame(message)}</div>
+                  )}
+
+                  {message.kind === 'wink' && (
+                    <div className="nudge-line wink-line">
+                      {winkEmoji(message.body)} {own ? 'Mandaste' : `${author} mandó`} un guiño
+                    </div>
+                  )}
+
+                  {(message.kind === 'file' || message.kind === 'voice') && (
+                    <div className={`message attachment-message ${own ? 'own' : ''}`}>
+                      {conversation.type === 'group' && !own && (
+                        <span className="message-avatar">{message.sender?.avatar ?? '👤'}</span>
+                      )}
+                      <div className="message-body">
+                        <div className="message-meta">
+                          <span className={`message-author ${own ? 'mine' : ''}`}>
+                            {own ? 'Vos decís:' : `${author} dice:`}
+                          </span>
+                          <span className="message-time">{formatTime(message.createdAt)}</span>
+                        </div>
+                        {message.attachment ? (
+                          <AttachmentView
+                            attachment={message.attachment}
+                            voice={message.kind === 'voice'}
+                          />
+                        ) : (
+                          <div className="attachment-error">El archivo ya no está disponible.</div>
+                        )}
+                        {message.body ? (
+                          <div className="message-text attachment-caption">
+                            {renderRichText(message.body)}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+
                   {message.kind === 'text' && (
                     <div className={`message ${own ? 'own' : ''}`}>
                       {conversation.type === 'group' && !own && (
@@ -343,7 +512,7 @@ export function Chat({
                           </span>
                           <span className="message-time">{formatTime(message.createdAt)}</span>
                         </div>
-                        <div className="message-text">{renderEmoticons(message.body)}</div>
+                        <div className="message-text">{renderRichText(message.body)}</div>
                       </div>
                     </div>
                   )}
@@ -378,12 +547,32 @@ export function Chat({
               </div>
             )}
 
+            {showFormat && (
+              <div className="format-popover">
+                {FORMAT_MARKERS.map((format) => (
+                  <button
+                    key={format.id}
+                    type="button"
+                    title={format.title}
+                    className={`format-${format.id}`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyFormat(format.prefix, format.suffix)}
+                  >
+                    {format.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="emoticon-bar">
               <button
                 type="button"
-                className="emoticon-btn letter"
+                className={`emoticon-btn letter ${showFormat ? 'active' : ''}`}
                 title="Formato del texto"
-                onClick={() => setToast('El formato enriquecido todavía no está disponible.')}
+                onClick={() => {
+                  setShowFormat((value) => !value);
+                  setShowEmoji(false);
+                }}
               >
                 A
               </button>
@@ -391,13 +580,25 @@ export function Chat({
                 type="button"
                 className="emoticon-btn"
                 title="Emoticones"
-                onClick={() => setShowEmoji((value) => !value)}
+                onClick={() => {
+                  setShowEmoji((value) => !value);
+                  setShowFormat(false);
+                }}
               >
                 🙂
               </button>
               <span className="emoticon-sep" />
-              <button type="button" className="emoticon-btn wide" title="Nota de voz" onClick={notAvailable}>
-                🎤 <span>Nota de voz</span>
+              <button
+                type="button"
+                className={`emoticon-btn wide ${recording ? 'recording' : ''}`}
+                title={recording ? 'Grabando una nota de voz' : 'Grabar una nota de voz'}
+                onClick={() => {
+                  if (recording) stopRecording(true);
+                  else void startRecording();
+                }}
+                disabled={!isOnline}
+              >
+                🎤 <span>{recording ? 'Grabando…' : 'Nota de voz'}</span>
               </button>
               <button
                 type="button"
@@ -408,7 +609,12 @@ export function Chat({
               >
                 💥
               </button>
-              <button type="button" className="emoticon-btn" title="Fondo de la conversación" onClick={notAvailable}>
+              <button
+                type="button"
+                className="emoticon-btn"
+                title="Fondo de la conversación"
+                onClick={() => setModal('background')}
+              >
                 🖼️
               </button>
               <span className="emoticon-sep" />
@@ -425,36 +631,75 @@ export function Chat({
               </button>
             </div>
 
-            <div className="composer-row">
-              <textarea
-                ref={inputRef}
-                rows={3}
-                value={text}
-                placeholder={isOnline ? 'Escribí un mensaje…' : 'Sin conexión…'}
-                onChange={(event) => handleChange(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    void submit();
-                  }
-                }}
-                onFocus={() => setShowEmoji(false)}
-              />
-
-              <div className="composer-buttons">
-                <button
-                  className="send-button"
-                  type="button"
-                  onClick={() => void submit()}
-                  disabled={!text.trim() || !isOnline}
-                >
+            {recording ? (
+              <div className="recording-bar">
+                <span className="recording-dot" />
+                <strong>Grabando…</strong>
+                <span className="recording-time">{formatClock(recordSeconds)}</span>
+                <span className="recording-hint">Se va a enviar como nota de voz.</span>
+                <button type="button" className="mini-button" onClick={() => stopRecording(false)}>
+                  Cancelar
+                </button>
+                <button type="button" className="big-button compact" onClick={() => stopRecording(true)}>
                   Enviar
                 </button>
-                <button className="search-button" type="button" onClick={toggleSearch}>
-                  Buscar
-                </button>
               </div>
-            </div>
+            ) : (
+              <div className="composer-row">
+                <textarea
+                  ref={inputRef}
+                  rows={3}
+                  value={text}
+                  placeholder={isOnline ? 'Escribí un mensaje…' : 'Sin conexión…'}
+                  onChange={(event) => handleChange(event.target.value)}
+                  onKeyDown={(event) => {
+                    if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
+                      const key = event.key.toLowerCase();
+                      const format = FORMAT_MARKERS.find(
+                        (item) =>
+                          item.id ===
+                          (key === 'b'
+                            ? 'bold'
+                            : key === 'i'
+                              ? 'italic'
+                              : key === 'u'
+                                ? 'underline'
+                                : key === 's'
+                                  ? 'strike'
+                                  : ''),
+                      );
+                      if (format) {
+                        event.preventDefault();
+                        applyFormat(format.prefix, format.suffix);
+                        return;
+                      }
+                    }
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault();
+                      void submit();
+                    }
+                  }}
+                  onFocus={() => {
+                    setShowEmoji(false);
+                    setShowFormat(false);
+                  }}
+                />
+
+                <div className="composer-buttons">
+                  <button
+                    className="send-button"
+                    type="button"
+                    onClick={() => void submit()}
+                    disabled={!text.trim() || !isOnline}
+                  >
+                    Enviar
+                  </button>
+                  <button className="search-button" type="button" onClick={toggleSearch}>
+                    Buscar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -522,13 +767,40 @@ export function Chat({
       </div>
 
       <div className="chat-statusbar">
-        <span className="chat-promo">Escribí :) para sonreír · Emoticones y zumbidos incluidos</span>
+        <span className="chat-promo">Escribí :) para sonreír · Emoticones, archivos y notas de voz</span>
         <span>
           {isOnline ? 'En línea' : 'Sin conexión'} · {messages.length} mensaje{messages.length === 1 ? '' : 's'}
         </span>
       </div>
+
+      {modal === 'games' && <GamesModal onClose={() => setModal(null)} />}
+      {modal === 'activities' && <ActivitiesModal onClose={() => setModal(null)} />}
+      {modal === 'background' && (
+        <BackgroundModal conversationId={conversation.id} onClose={() => setModal(null)} />
+      )}
     </div>
   );
+}
+
+function formatClock(seconds: number): string {
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function winkEmoji(id: string): string {
+  return WINKS.find((wink) => wink.id === id)?.emoji ?? '✨';
+}
+
+function describeGame(message: Message): string {
+  const author = message.sender?.displayName ?? 'Alguien';
+  try {
+    const data = JSON.parse(message.body) as { game?: string; values?: number[] };
+    if (data.game === 'dice' && Array.isArray(data.values)) {
+      return `🎲 ${author} sacó ${data.values.join(' y ')}`;
+    }
+  } catch {
+    // Si el cuerpo no es JSON, mostramos un texto genérico.
+  }
+  return `🎮 ${author} empezó una partida`;
 }
 
 function ToolButton({

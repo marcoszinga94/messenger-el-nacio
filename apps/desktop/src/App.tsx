@@ -11,6 +11,8 @@ export function App() {
   const ready = useApp((state) => state.ready);
   const initialize = useApp((state) => state.initialize);
   const nudgeTick = useApp((state) => state.nudgeTick);
+  const winkBurst = useApp((state) => state.winkBurst);
+  const clearWink = useApp((state) => state.clearWink);
   const activeId = useApp((state) => state.activeId);
   const conversations = useApp((state) => state.conversations);
   const contacts = useApp((state) => state.contacts);
@@ -26,6 +28,12 @@ export function App() {
     const timer = setTimeout(() => setShake(false), 650);
     return () => clearTimeout(timer);
   }, [nudgeTick]);
+
+  useEffect(() => {
+    if (!winkBurst) return;
+    const timer = setTimeout(clearWink, 2600);
+    return () => clearTimeout(timer);
+  }, [winkBurst, clearWink]);
 
   if (!ready) {
     return (
@@ -55,6 +63,12 @@ export function App() {
         <div className="window-body">{session ? <Main /> : <Login />}</div>
       </div>
       <ResizeHandles />
+      {winkBurst && (
+        <div className="wink-overlay" key={winkBurst.id} onClick={clearWink}>
+          <div className="wink-overlay-emoji">{winkBurst.emoji}</div>
+          <div className="wink-overlay-text">{winkBurst.displayName} te mandó un guiño</div>
+        </div>
+      )}
       <Toast />
     </div>
   );

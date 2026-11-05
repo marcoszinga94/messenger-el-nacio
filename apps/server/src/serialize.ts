@@ -1,4 +1,15 @@
-import type { ConversationMember, ConversationSummary, EffectiveStatus, Me, Message, MessageKind, PublicUser, UserRole, UserStatus } from '@nacio/shared';
+import type {
+  Attachment,
+  ConversationMember,
+  ConversationSummary,
+  EffectiveStatus,
+  Me,
+  Message,
+  MessageKind,
+  PublicUser,
+  UserRole,
+  UserStatus,
+} from '@nacio/shared';
 import type { Db } from './db.js';
 import { isOnline } from './realtime.js';
 
@@ -22,7 +33,32 @@ export interface MessageRow {
   sender_id: string | null;
   kind: MessageKind;
   body: string;
+  file_id: string | null;
   created_at: number;
+}
+
+export interface FileRow {
+  id: string;
+  owner_id: string;
+  name: string;
+  mime: string;
+  size: number;
+  duration: number | null;
+  created_at: number;
+}
+
+export function toAttachment(row: FileRow): Attachment {
+  return {
+    id: row.id,
+    name: row.name,
+    mime: row.mime,
+    size: row.size,
+    duration: row.duration,
+  };
+}
+
+export function getFileRow(db: Db, id: string): FileRow | undefined {
+  return db.prepare('SELECT * FROM files WHERE id = ?').get(id) as unknown as FileRow | undefined;
 }
 
 export interface ConversationRow {
@@ -77,12 +113,14 @@ export function getUserRow(db: Db, id: string): UserRow | undefined {
 
 export function toMessage(db: Db, row: MessageRow): Message {
   const sender = row.sender_id ? getUserRow(db, row.sender_id) : undefined;
+  const file = row.file_id ? getFileRow(db, row.file_id) : undefined;
   return {
     id: row.id,
     conversationId: row.conversation_id,
     sender: sender ? toPublicUser(sender) : null,
     kind: row.kind,
     body: row.body,
+    attachment: file ? toAttachment(file) : null,
     createdAt: row.created_at,
   };
 }

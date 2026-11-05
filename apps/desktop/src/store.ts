@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ContactEntry, ConversationSummary, Me, Message, UserStatus } from '@nacio/shared';
-import { api, ApiError, requestLogin, requestRegister } from './api';
+import { WINKS } from '@nacio/shared';
+import { api, ApiError, requestLogin, requestRegister, uploadAttachment } from './api';
 import { cacheMessages, cachedMessages, clearConversationHistory, clearLocalHistory } from './db';
 import {
   clearSession,
@@ -26,6 +27,24 @@ interface Toast {
   text: string;
 }
 
+interface WinkBurst {
+  id: number;
+  emoji: string;
+  displayName: string;
+}
+
+const BACKGROUNDS_KEY = 'nacio-chat-backgrounds';
+
+function loadBackgrounds(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(BACKGROUNDS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
 export interface AppState {
   session: StoredSession | null;
   ready: boolean;
@@ -39,6 +58,8 @@ export interface AppState {
   soundOn: boolean;
   toast: Toast | null;
   nudgeTick: number;
+  winkBurst: WinkBurst | null;
+  backgrounds: Record<string, string>;
 
   initialize: () => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
@@ -55,6 +76,11 @@ export interface AppState {
   deleteGroup: (id: string) => Promise<void>;
   addGroupMembers: (id: string, userIds: string[]) => Promise<void>;
   sendMessage: (body: string) => Promise<void>;
+  sendAttachment: (blob: Blob, name: string, duration?: number) => Promise<void>;
+  sendDice: () => Promise<void>;
+  sendWink: (wink: string) => Promise<void>;
+  clearWink: () => void;
+  setBackground: (conversationId: string, preset: string) => void;
   sendNudge: () => Promise<void>;
   markRead: (id: string) => void;
   notifyTyping: (id: string, typing: boolean) => void;
@@ -62,6 +88,11 @@ export interface AppState {
   updatePresence: (userId: string, status: PublicUserStatus, lastSeen: number | null) => void;
   incomingMessage: (message: Message) => void;
   incomingNudge: (payload: { conversationId: string; from: { displayName: string } }) => void;
+  incomingWink: (payload: {
+    conversationId: string;
+    from: { displayName: string };
+    wink: string;
+  }) => void;
   updateMe: (patch: {
     displayName?: string;
     avatar?: string;
@@ -116,6 +147,8 @@ export const useApp = create<AppState>()((set, get) => ({
   soundOn: isSoundOn(),
   toast: null,
   nudgeTick: 0,
+  winkBurst: null,
+  backgrounds: loadBackgrounds(),
 
   async initialize() {
     const stored = loadSession();
@@ -209,6 +242,7 @@ export const useApp = create<AppState>()((set, get) => ({
     socket.on('presence:update', (presence) => get().updatePresence(presence.userId, presence.status, presence.lastSeen));
     socket.on('typing', (payload) => get().receiveTyping(payload));
     socket.on('nudge', (payload) => get().incomingNudge(payload));
+    socket.on('wink', (payload) => get().incomingWink(payload));
   },
 
   async refreshContacts() {
@@ -339,6 +373,94 @@ export const useApp = create<AppState>()((set, get) => ({
     }
   },
 
+  async sendAttachment(blob, name, duration) {
+    const { activeId } = get();
+    if (!activeId) return;
+    try {
+      const attachment = await uploadAttachment(blob, name, duration);
+      if (socket?.connected) {
+        await new Promise<void>((resolve) => {
+          socket!.emit('message:send', { conversationId: activeId, fileId: attachment.id }, (result) => {
+            if (!result.ok) get().setToast(result.error ?? 'No se pudo enviar el archivo.');
+            resolve();
+          });
+        });
+      } else {
+        const data = await api<{ message: Message }>(`/api/conversations/${activeId}/messages`, {
+          method: 'POST',
+          body: JSON.stringify({ fileId: attachment.id }),
+        });
+        get().incomingMessage(data.message);
+      }
+      playSound('send');
+    } catch (error) {
+      get().setToast(error instanceof Error ? error.message : 'No se pudo enviar el archivo.');
+    }
+  },
+
+  async sendDice() {
+    const { activeId } = get();
+    if (!activeId) return;
+    if (socket?.connected) {
+      await new Promise<void>((resolve) => {
+        socket!.emit('game:dice', { conversationId: activeId }, (result) => {
+          if (!result.ok) get().setToast(result.error ?? 'No se pudieron tirar los dados.');
+          resolve();
+        });
+      });
+      return;
+    }
+    try {
+      const data = await api<{ message: Message }>(`/api/conversations/${activeId}/dice`, {
+        method: 'POST',
+      });
+      get().incomingMessage(data.message);
+    } catch (error) {
+      get().setToast(error instanceof Error ? error.message : 'No se pudieron tirar los dados.');
+    }
+  },
+
+  async sendWink(wink) {
+    const { activeId } = get();
+    if (!activeId) return;
+    if (socket?.connected) {
+      await new Promise<void>((resolve) => {
+        socket!.emit('wink', { conversationId: activeId, wink }, (result) => {
+          if (!result.ok) get().setToast(result.error ?? 'No se pudo mandar el guiño.');
+          resolve();
+        });
+      });
+      return;
+    }
+    try {
+      const data = await api<{ message: Message }>(`/api/conversations/${activeId}/wink`, {
+        method: 'POST',
+        body: JSON.stringify({ wink }),
+      });
+      get().incomingMessage(data.message);
+    } catch (error) {
+      get().setToast(error instanceof Error ? error.message : 'No se pudo mandar el guiño.');
+    }
+  },
+
+  clearWink() {
+    set({ winkBurst: null });
+  },
+
+  setBackground(conversationId, preset) {
+    set((state) => {
+      const backgrounds = { ...state.backgrounds };
+      if (preset === 'default') delete backgrounds[conversationId];
+      else backgrounds[conversationId] = preset;
+      try {
+        localStorage.setItem(BACKGROUNDS_KEY, JSON.stringify(backgrounds));
+      } catch {
+        // Si el almacenamiento está lleno, el fondo se mantiene solo en memoria.
+      }
+      return { backgrounds };
+    });
+  },
+
   async sendNudge() {
     const { activeId } = get();
     if (!activeId) return;
@@ -443,6 +565,18 @@ export const useApp = create<AppState>()((set, get) => ({
     }));
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(() => set({ toast: null }), 3500);
+  },
+
+  incomingWink(payload) {
+    const wink = WINKS.find((item) => item.id === payload.wink);
+    set({
+      winkBurst: {
+        id: Date.now(),
+        emoji: wink?.emoji ?? '✨',
+        displayName: payload.from.displayName,
+      },
+    });
+    get().setToast(`${payload.from.displayName} te mandó un guiño`);
   },
 
   async updateMe(patch) {

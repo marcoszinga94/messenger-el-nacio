@@ -5,12 +5,15 @@ import {
   dmSchema,
   groupSchema,
   messageSchema,
+  winkSchema,
+  WINKS,
 } from '@nacio/shared';
 import {
   areContacts,
   broadcastMessage,
   canSendToConversation,
   conversationMemberIds,
+  createAttachmentMessage,
   createMessage,
   isBlockedBetween,
   isMember,
@@ -24,6 +27,7 @@ import {
   conversationSummary,
   conversationsForUser,
   getConversationRow,
+  getFileRow,
   getUserRow,
   toMessage,
   type MessageRow,
@@ -277,7 +281,16 @@ export default async function conversationRoutes(app: FastifyInstance): Promise<
     const check = canSendToConversation(db, id, request.user.id);
     if (!check.ok) return fail(reply, check.error.includes('participás') ? 404 : 403, check.error);
 
-    const message = createMessage(db, id, request.user.id, 'text', body.body);
+    let message;
+    if (body.fileId) {
+      const file = getFileRow(db, body.fileId);
+      if (!file || file.owner_id !== request.user.id) {
+        return fail(reply, 400, 'El archivo no está disponible.');
+      }
+      message = createAttachmentMessage(db, id, request.user.id, file, body.body);
+    } else {
+      message = createMessage(db, id, request.user.id, 'text', body.body);
+    }
     broadcastMessage(message);
     return reply.code(201).send({ message });
   });
@@ -298,6 +311,42 @@ export default async function conversationRoutes(app: FastifyInstance): Promise<
         .except(`user:${request.user.id}`)
         .emit('nudge', { conversationId: id, from: message.sender });
     }
+    return reply.code(201).send({ message });
+  });
+
+  app.post('/conversations/:id/wink', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const body = parse(winkSchema, request.body, reply);
+    if (!body) return;
+    const id = (request.params as { id: string }).id;
+    if (!WINKS.some((wink) => wink.id === body.wink)) return fail(reply, 400, 'Ese guiño no existe.');
+    const check = canSendToConversation(db, id, request.user.id);
+    if (!check.ok) return fail(reply, check.error.includes('participás') ? 404 : 403, check.error);
+
+    const message = createMessage(db, id, request.user.id, 'wink', body.wink);
+    broadcastMessage(message);
+    if (message.sender) {
+      getIO()
+        ?.to(`conv:${id}`)
+        .except(`user:${request.user.id}`)
+        .emit('wink', { conversationId: id, from: message.sender, wink: body.wink });
+    }
+    return reply.code(201).send({ message });
+  });
+
+  app.post('/conversations/:id/dice', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const id = (request.params as { id: string }).id;
+    const check = canSendToConversation(db, id, request.user.id);
+    if (!check.ok) return fail(reply, check.error.includes('participás') ? 404 : 403, check.error);
+
+    const values = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
+    const message = createMessage(
+      db,
+      id,
+      request.user.id,
+      'game',
+      JSON.stringify({ game: 'dice', values }),
+    );
+    broadcastMessage(message);
     return reply.code(201).send({ message });
   });
 }

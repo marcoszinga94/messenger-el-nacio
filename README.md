@@ -75,6 +75,9 @@ makepkg -si
 - Historial con retención configurable (30 días por defecto).
 - Mensajes offline: se entregan al volver a conectarse.
 - Zumbidos con límite antiabuso, emoticones clásicos y sonidos.
+- Envío de archivos e imágenes (hasta 25 MB) y notas de voz.
+- Formato de texto (negrita, cursiva, subrayado y tachado) y fondos por conversación.
+- Juegos (dados compartidos, ta-te-tí y piedra, papel o tijera) y guiños animados.
 - Panel de administración: usuarios, invitaciones, salas, ajustes y auditoría.
 - Registro con código de invitación.
 - HTTPS automático con Caddy y despliegue en Windows.

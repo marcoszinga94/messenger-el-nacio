@@ -3,7 +3,14 @@ import type { Message, MessageKind } from '@nacio/shared';
 import { NUDGE_COOLDOWN_MS } from '@nacio/shared';
 import type { Db } from './db.js';
 import { emitToUsers, getIO } from './realtime.js';
-import { effectiveStatus, getConversationRow, getUserRow, toMessage, type MessageRow } from './serialize.js';
+import {
+  effectiveStatus,
+  getConversationRow,
+  getUserRow,
+  toMessage,
+  type FileRow,
+  type MessageRow,
+} from './serialize.js';
 
 export function isMember(db: Db, conversationId: string, userId: string): boolean {
   return (
@@ -84,14 +91,30 @@ export function createMessage(
   senderId: string | null,
   kind: MessageKind,
   body: string,
+  fileId: string | null = null,
 ): Message {
   const id = randomUUID();
   const now = Date.now();
   db.prepare(
-    'INSERT INTO messages (id, conversation_id, sender_id, kind, body, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-  ).run(id, conversationId, senderId, kind, body, now);
+    'INSERT INTO messages (id, conversation_id, sender_id, kind, body, file_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  ).run(id, conversationId, senderId, kind, body, fileId, now);
   const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(id) as unknown as MessageRow;
   return toMessage(db, row);
+}
+
+/** Los audios se muestran como nota de voz; el resto, como archivo adjunto. */
+export function kindForFile(file: Pick<FileRow, 'mime'>): MessageKind {
+  return file.mime.startsWith('audio/') ? 'voice' : 'file';
+}
+
+export function createAttachmentMessage(
+  db: Db,
+  conversationId: string,
+  senderId: string,
+  file: FileRow,
+  caption: string,
+): Message {
+  return createMessage(db, conversationId, senderId, kindForFile(file), caption, file.id);
 }
 
 /** Avisa a los contactos aceptados que cambió el estado de presencia. */

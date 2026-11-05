@@ -1,19 +1,20 @@
 import type { FastifyInstance } from 'fastify';
 import { Server } from 'socket.io';
 import type { ClientToServerEvents, Message, ServerToClientEvents } from '@nacio/shared';
-import { messageSchema } from '@nacio/shared';
+import { messageSchema, WINKS } from '@nacio/shared';
 import { verifyAccessToken, type AuthUser } from './auth.js';
 import {
   broadcastMessage,
   broadcastPresence,
   canSendToConversation,
+  createAttachmentMessage,
   createMessage,
   isMember,
   nudgeCooldown,
 } from './chat.js';
 import { config } from './config.js';
 import { addUserSocket, removeUserSocket, setIO } from './realtime.js';
-import { getUserRow, type UserRow } from './serialize.js';
+import { getFileRow, getUserRow, type UserRow } from './serialize.js';
 
 interface SocketData {
   user: AuthUser;
@@ -91,7 +92,79 @@ export function setupSockets(app: FastifyInstance): IO {
         return;
       }
 
-      const message: Message = createMessage(app.db, payload.conversationId, user.id, 'text', parsed.data.body);
+      let message: Message;
+      if (parsed.data.fileId) {
+        const file = getFileRow(app.db, parsed.data.fileId);
+        if (!file || file.owner_id !== user.id) {
+          ack?.({ ok: false, error: 'El archivo no está disponible.' });
+          return;
+        }
+        message = createAttachmentMessage(
+          app.db,
+          payload.conversationId,
+          user.id,
+          file,
+          parsed.data.body,
+        );
+      } else {
+        message = createMessage(app.db, payload.conversationId, user.id, 'text', parsed.data.body);
+      }
+      broadcastMessage(message);
+      ack?.({ ok: true, message });
+    });
+
+    socket.on('wink', (payload, ack) => {
+      if (!allowMessage()) {
+        ack?.({ ok: false, error: 'Estás enviando cosas demasiado rápido.' });
+        return;
+      }
+      if (!payload || typeof payload.conversationId !== 'string' || typeof payload.wink !== 'string') {
+        ack?.({ ok: false, error: 'Guiño inválido.' });
+        return;
+      }
+      if (!WINKS.some((wink) => wink.id === payload.wink)) {
+        ack?.({ ok: false, error: 'Ese guiño no existe.' });
+        return;
+      }
+      const check = canSendToConversation(app.db, payload.conversationId, user.id);
+      if (!check.ok) {
+        ack?.({ ok: false, error: check.error });
+        return;
+      }
+      const message = createMessage(app.db, payload.conversationId, user.id, 'wink', payload.wink);
+      broadcastMessage(message);
+      if (message.sender) {
+        socket.to(`conv:${payload.conversationId}`).emit('wink', {
+          conversationId: payload.conversationId,
+          from: message.sender,
+          wink: payload.wink,
+        });
+      }
+      ack?.({ ok: true, message });
+    });
+
+    socket.on('game:dice', (payload, ack) => {
+      if (!allowMessage()) {
+        ack?.({ ok: false, error: 'Estás jugando demasiado rápido.' });
+        return;
+      }
+      if (!payload || typeof payload.conversationId !== 'string') {
+        ack?.({ ok: false, error: 'Conversación inválida.' });
+        return;
+      }
+      const check = canSendToConversation(app.db, payload.conversationId, user.id);
+      if (!check.ok) {
+        ack?.({ ok: false, error: check.error });
+        return;
+      }
+      const values = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
+      const message = createMessage(
+        app.db,
+        payload.conversationId,
+        user.id,
+        'game',
+        JSON.stringify({ game: 'dice', values }),
+      );
       broadcastMessage(message);
       ack?.({ ok: true, message });
     });

@@ -1,4 +1,4 @@
-import type { AuthResponse } from '@nacio/shared';
+import type { Attachment, AuthResponse } from '@nacio/shared';
 import { getServer, loadSession, refreshTokens, saveSession, type StoredSession } from './session';
 
 export class ApiError extends Error {
@@ -38,6 +38,55 @@ export async function api<T>(path: string, init: RequestInit = {}, retry = true)
     throw new ApiError(message, response.status);
   }
   return data as T;
+}
+
+async function authorizedFetch(path: string, init: RequestInit = {}, retry = true): Promise<Response> {
+  const session = loadSession();
+  const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) };
+  if (session) headers.Authorization = `Bearer ${session.accessToken}`;
+
+  let response: Response;
+  try {
+    response = await fetch(`${getServer()}${path}`, { ...init, headers });
+  } catch {
+    throw new ApiError('No se pudo conectar con el servidor.', 0);
+  }
+
+  if (response.status === 401 && retry && session?.refreshToken) {
+    if (await refreshTokens()) return authorizedFetch(path, init, false);
+  }
+  return response;
+}
+
+export async function uploadAttachment(
+  blob: Blob,
+  name: string,
+  duration?: number,
+): Promise<Attachment> {
+  const form = new FormData();
+  form.append('file', blob, name);
+  const query = duration && duration > 0 ? `?duration=${Math.round(duration)}` : '';
+  const response = await authorizedFetch(`/api/files${query}`, { method: 'POST', body: form });
+  const data = (await response.json().catch(() => ({}))) as { attachment?: Attachment; error?: string };
+  if (!response.ok || !data.attachment) {
+    throw new ApiError(data.error ?? 'No se pudo subir el archivo.', response.status);
+  }
+  return data.attachment;
+}
+
+export async function downloadAttachment(id: string): Promise<Blob> {
+  const response = await authorizedFetch(`/api/files/${id}`);
+  if (!response.ok) {
+    let message = 'No se pudo descargar el archivo.';
+    try {
+      const data = (await response.json()) as { error?: string };
+      if (data.error) message = data.error;
+    } catch {
+      // Sin JSON, dejamos el mensaje genérico.
+    }
+    throw new ApiError(message, response.status);
+  }
+  return response.blob();
 }
 
 function storeAuth(data: AuthResponse): StoredSession {
