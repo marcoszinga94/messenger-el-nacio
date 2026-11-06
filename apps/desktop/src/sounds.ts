@@ -5,6 +5,7 @@ const players = new Map<string, HTMLAudioElement>();
 // (plugin gst-plugins-good). Arrancamos en false y lo habilitamos recién
 // cuando el backend de audio confirma que puede reproducir.
 let audioSupported = false;
+let audioUnlocked = false;
 
 export type SoundName = 'message' | 'send' | 'nudge' | 'online' | 'offline';
 
@@ -22,6 +23,25 @@ export function setAudioSupported(value: boolean): void {
 
 export function isAudioSupported(): boolean {
   return audioSupported;
+}
+
+export function unlockAudio(): void {
+  if (audioUnlocked || !audioSupported) return;
+  try {
+    const base = import.meta.env.BASE_URL || '/';
+    const audio = new Audio(`${base}sounds/message.wav`);
+    audio.volume = 0;
+    void audio
+      .play()
+      .then(() => {
+        audioUnlocked = true;
+        audio.pause();
+        audio.removeAttribute('src');
+      })
+      .catch(() => undefined);
+  } catch {
+    // Sin audio disponible.
+  }
 }
 
 export function playSound(name: SoundName): void {

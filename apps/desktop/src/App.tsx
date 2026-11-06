@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { setAudioSupported } from './sounds';
+import { setAudioSupported, unlockAudio } from './sounds';
 import { useApp } from './store';
 import { Login } from './components/Login';
 import { Main } from './components/Main';
@@ -52,6 +52,16 @@ export function App() {
       })
       .catch(() => setAudioSupported(false));
   }, [setSound, setToast]);
+
+  useEffect(() => {
+    const unlock = () => unlockAudio();
+    window.addEventListener('pointerdown', unlock, { passive: true });
+    window.addEventListener('keydown', unlock);
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+  }, []);
 
   useEffect(() => {
     if (!inTauri) return;

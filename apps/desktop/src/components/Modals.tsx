@@ -4,6 +4,7 @@ import { AVATARS } from '@nacio/shared';
 import { api } from '../api';
 import { CHAT_BACKGROUNDS } from '../backgrounds';
 import { getServer } from '../session';
+import { playSound } from '../sounds';
 import { useApp } from '../store';
 import { contactName, conversationPeer, conversationTitle } from '../utils';
 
@@ -359,10 +360,15 @@ export function SettingsModal({
 
       <section className="settings-section">
         <h3>Sonido y datos</h3>
-        <label className="switch-row">
-          <input type="checkbox" checked={soundOn} onChange={(event) => setSound(event.target.checked)} />
-          Reproducir sonidos de mensajes y zumbidos
-        </label>
+        <div className="settings-row">
+          <label className="switch-row">
+            <input type="checkbox" checked={soundOn} onChange={(event) => setSound(event.target.checked)} />
+            Reproducir sonidos de mensajes y zumbidos
+          </label>
+          <button type="button" className="mini-button" onClick={() => playSound('message')}>
+            Probar sonido
+          </button>
+        </div>
         <div className="settings-row">
           <button
             className="mini-button"
